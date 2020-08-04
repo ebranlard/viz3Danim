@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<title>Mode shape visualization</title>
+<style>
+    html, body {
+        margin: 0;  /* Make sure that there is no margin around the canvas */
+		overflow: hidden;  /* Make sure we don't get scroll bars. */
+    }
+    canvas {
+        display: block; /* The default display, inline, would add small margin below the canvas */
+    }
+</style>
+<script src="three.min.js"></script>
+<script src="TrackballControls.js"></script>
+<script src="script.js"></script>
+</head>
+<body onload="init()">
+Help
+Load
+Animate
+Play
+Pause
+Stop
+
+<p>
+<label><input type="checkbox" id="animate">Animate</label>
+<label><input type="checkbox" id="show-seabed">Sea bed</label>
+<label><input type="checkbox" id="show-sealevel">Sea level</label>
+<label style="margin-left: 10px"><input type="radio" name="model" id="horse">Horse</label>
+<button style="margin-left: 10px" onclick="resetControls()">Reset view</button>
+</p>
+
+
+<div id="canvas-holder">
+<canvas id="maincanvas" ></canvas>
+</div>
+
+<textarea id="DEBUG">
+
+</textarea>
+
+
+
+
+<!-- Help -->
+<div id="help-content" style="display:none">
+<h3>Help</h3>
+<p>
+Some help text.
+</p>
+</div>
+<div id="help-icon" onclick="showHelp()">Help? </div>
+<div id="hide-help-icon" onclick="showHelp()">Help? </div>
+
+
+</body>
+</html>
