@@ -1,9 +1,14 @@
 "use strict";
 
 // --- GUI data
-var renderer, scene, camera, light;   // Three.js rendering basics.
+var renderer, scene, light;   // Three.js rendering basics.
+var perspectiveCamera, orthographicCamera;
+var params = {
+    orthographicCamera: false
+};
 var canvas;   // The canvas on which the renderer will draw.
 var controls; // an object of type TrackballControls, the handles rotation using the mouse.
+var frustumSize
 
 // --- GUI objects
 var swl, grd ; // Main WT elements
@@ -297,17 +302,16 @@ function getOrthoViewport(viewangle){
 }
 
 function changeCamera(){
-    // Delete current camera
-    if(camera){
-        scene.remove(camera);
-    }
-    // Create a new camera
-    createCamera();
+    params.orthographicCamera = document.getElementById('parallel-proj').checked;
+    installTrackballControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
 }
 
 
 /* Crete camera, light and view controls */
 function createCamera(){
+    params.orthographicCamera = document.getElementById('parallel-proj').checked;
+    //params.orthographicCamera = false;
+
     var width = canvas.width;
     var height = canvas.height;
     var AR = width/height;
@@ -318,20 +322,20 @@ function createCamera(){
         var w = extent.maxDim*2.0;
         var h = w/AR;
     }
-    if (document.getElementById('parallel-proj').checked) {
-        camera = new THREE.OrthographicCamera(
-             -w/2+extent.centerX, w/2+extent.centerX,
-            h/2+extent.centerY, -h/2+extent.centerY, 
-            -extent.maxDim*50, 
-            extent.maxDim*50);
+
+    //orthographicCamera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000 );
+    frustumSize = extent.maxDim*2.0
+    orthographicCamera = new THREE.OrthographicCamera(
+         -w/2+extent.centerX, w/2+extent.centerX,
+        h/2+extent.centerY, -h/2+extent.centerY, 
+        -extent.maxDim*50, 
+        extent.maxDim*50);
         //_viewport.left, _viewport.right, _viewport.top, _viewport.bottom, _viewport.near, _viewport.far )
-    } else { 
-        camera  = new THREE.PerspectiveCamera(40, canvas.width/canvas.height, extent.maxDim*0.005, extent.maxDim*50);
-    //camera.position.set(extent.centerX, extent.centerY*0 + extent.maxDim*2, extent.centerZ + extent.maxDim*5);
-    }
-    camera.position.set(extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
-    console.log(camera)
-    console.log(camera.position)
+     orthographicCamera.position.set(extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
+
+     perspectiveCamera  = new THREE.PerspectiveCamera(40, canvas.width/canvas.height, extent.maxDim*0.005, extent.maxDim*50);
+     perspectiveCamera.position.set(extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     //camera.lookAt(scene.position); //camera.lookAt(new THREE.Vector3(0,0,0));
     camera.lookAt(new THREE.Vector3(extent.centerX,extent.centerY,extent.centerZ));
     scene.add(camera);
@@ -355,9 +359,9 @@ function resetControls() {
 // OpenFAST "-x" view is three z view
 function xView() {
     controls.reset();
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     camera.position.set(extent.centerX,extent.centerY*0,extent.maxDim*3);
     camera.updateProjectionMatrix();
-    if (camera instanceof THREE.PerspectiveCamera) { }
     if (!animating) {
       plotSceneAtTime();
     }
@@ -366,9 +370,9 @@ function xView() {
 // OpenFAST "y" view is three -x view
 function yView() {
     controls.reset();
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
     camera.updateProjectionMatrix();
-    if (camera instanceof THREE.PerspectiveCamera) { }
     if (!animating) {
       plotSceneAtTime();
     }
@@ -377,9 +381,9 @@ function yView() {
 // OpenFAST "z" view is three y view
 function zView() {
     controls.reset();
-    camera.position.set(extent.centerX*0.0, extent.maxDim*3,extent.centerZ);
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+    camera.position.set(0.0000, extent.maxDim*3,extent.centerZ+0.0001); // NOTE: rotation matrix sensitive
     camera.updateProjectionMatrix();
-    if (camera instanceof THREE.PerspectiveCamera) { }
     if (!animating) {
       plotSceneAtTime();
     }
@@ -395,12 +399,20 @@ function zView() {
      var height = window.innerHeight*0.8;
      renderer.setSize(width, height);
      console.log('>>> doResize Called')
-     if (camera) {
-        if (camera instanceof THREE.PerspectiveCamera) {
-            //camera.bottom=
-        }
-        camera.aspect = width/ height;
-        camera.updateProjectionMatrix(); // Need to call this for the change in aspect to take effect.
+     if (perspectiveCamera) {
+        var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+        var aspect = width/ height;
+
+        perspectiveCamera.aspect = width/ height;
+        perspectiveCamera.updateProjectionMatrix(); // Need to call this for the change in aspect to take effect.
+
+        orthographicCamera.left   = - frustumSize * aspect / 2;
+        orthographicCamera.right  =   frustumSize * aspect / 2;
+        orthographicCamera.top    =   frustumSize / 2;
+        orthographicCamera.bottom = - frustumSize / 2;
+        orthographicCamera.updateProjectionMatrix();
+
+        controls.handleResize();
      }
  }
 /*  This page uses THREE.TrackballControls to let the user use the mouse to rotate
@@ -432,10 +444,6 @@ function installTrackballControls(camera) {
 		}
     }
     function zoom() {
-        //if (camera instanceof  THREE.OrthographicCamera) {
-        //    camera.zoom *=1.1;
-        //    camera.updateProjectionMatrix;
-        //}
         move();
     }
     function down() {
@@ -556,6 +564,7 @@ function getExtent(){
  *  the position and velocity data of the balls.
  */
 function render() {
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     renderer.render(scene, camera);
 }
 
