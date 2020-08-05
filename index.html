@@ -10,40 +10,64 @@
     canvas {
         display: block; /* The default display, inline, would add small margin below the canvas */
     }
+    body {
+      background-color: black;
+      color: white;
+    }
+    legend {
+      padding: 0px;
+    }
+    fieldset {
+      padding: 0px;
+      padding-left: 0px;
+      margin-bottom: 10px;
+      display: block;
+      border: 0px;
+    }
 </style>
+<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
 <script src="three.min.js"></script>
 <script src="TrackballControls.js"></script>
 <script src="script.js"></script>
 </head>
 <body onload="init()">
+<!-- Help
 Help
 Load
 Animate
 Play
 Pause
 Stop
-
-<p>
-<label><input type="checkbox" id="animate">Animate</label>
+-->
+<fieldset>
+<legend>Animation</legend>
+<input type="checkbox" id="animate">Animate</label>
+<input type="checkbox" id="animate">Animate</label>
+<label style='margin-left: 8px'>Speed: <input type="range"   id='set-dt' min="0" max="0.5" step="0.0005" value="0.1" size="12"></label>
+<label style='margin-left: 8px'>Amplitude: <input type="range"   id='set-ampl' min="0" max="4" step="0.1" value="1" size="8"></label>
+</fieldset>
+<fieldset>
+<legend>View</legend>
+<label><input type="checkbox" id="show-axes">Axes</label>
 <label><input type="checkbox" id="show-seabed">Sea bed</label>
 <label><input type="checkbox" id="show-sealevel">Sea level</label>
-<label style="margin-left: 10px"><input type="radio" name="model" id="horse">Horse</label>
-<button style="margin-left: 10px" onclick="resetControls()">Reset view</button>
-</p>
-
+<button style="margin-left: 8px" onclick="xView()">Front (-x)</button>
+<button style="margin-left: 8px" onclick="zView()">Top (z)</button>
+<button style="margin-left: 8px" onclick="yView()">Side (y)</button>
+<button style="margin-left: 8px" onclick="resetControls()">Reset</button>
+</fieldset>
+<fieldset>
+<legend>Modes</legend>
+<div id="mode-selection"></div>
+</fieldset>
 
 <div id="canvas-holder">
 <canvas id="maincanvas" ></canvas>
 </div>
 
-<textarea id="DEBUG">
-
-</textarea>
 
 
-
-
-<!-- Help -->
+<!-- Help
 <div id="help-content" style="display:none">
 <h3>Help</h3>
 <p>
@@ -52,6 +76,7 @@ Some help text.
 </div>
 <div id="help-icon" onclick="showHelp()">Help? </div>
 <div id="hide-help-icon" onclick="showHelp()">Help? </div>
+-->
 
 
 </body>
