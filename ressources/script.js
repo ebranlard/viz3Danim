@@ -1,5 +1,6 @@
-import * as THREE from './three.module.js';
+import * as THREE from            './three.module.js';
 import { TrackballControls } from './TrackballControlsModule.js';
+import { GUI }               from './dat.gui.module.js';
 
 
 // --- GUI data
@@ -103,7 +104,8 @@ function getQueryVariable(variable)
 function loadJSONcallback(AJ, filename, callback) {   
     var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
-    var filename_new=filename+'?t='+Date.now();
+    //var filename_new=filename+'?t='+Date.now();
+    var filename_new=filename;
     xobj.open('GET', filename_new, true); // Replace 'my_data' with the path to your file
 
     xobj.onreadystatechange = function () {
@@ -305,7 +307,7 @@ function getOrthoViewport(viewangle){
 
 function changeCamera(){
     params.orthographicCamera = document.getElementById('parallel-proj').checked;
-    installTrackballControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
+    createControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
 }
 
 
@@ -348,7 +350,7 @@ function createCamera(){
 	camera.add(light);
 
     // Trackball controls
-    installTrackballControls(camera);
+    createControls(camera);
 }
 
 
@@ -416,16 +418,9 @@ function zView() {
         controls.handleResize();
      }
  }
-/*  This page uses THREE.TrackballControls to let the user use the mouse to rotate
- *  the view.  TrackballControls are designed to be used during an animation, where
- *  the rotation is updated as part of preparing for the next frame.  The scene
- *  is not automatically updated just because the user drags the mouse.  To get
- *  the rotation to work without animation, I add another mouse listener to the
- *  canvas, just to call the render() function when the user drags the mouse.
- *  The same thing holds for touch events -- I call render for any mouse move
- *  event with one touch.
- */
-function installTrackballControls(camera) {
+
+/* Create mouse camera controller */
+function createControls(camera) {
     if (controls) {
         controls.dispose();
     }
@@ -578,13 +573,19 @@ function enableGUI() {
     time =0 ;         
     setDtFromJS(0.03) ;        // Time step
     setAmplitudeFromJS(1.0) ;  // Amplitude of modes
-
     setDt();
     setAmplitudeFromSlider();
     showSeaLevel();
     showSeaBed();
     showAxes();
     showBox();
+
+    //var gui = new GUI();
+    //gui.add( params, 'orthographicCamera' ).name('Parrallel projection').onChange( function ( value ) {
+    //    createControls( value ? orthographicCamera : perspectiveCamera );
+    //} );
+
+    // --- Animate
     requestAnimationFrame(doFrame);  // Start the animation.
     //render();
 }
@@ -817,6 +818,9 @@ function init() {
     catch (e) {
         document.body.innerHTML = "<h3 style='color: #ff0000;><b>Sorry, an error occurred:<br>" + e + "</b></h3>";
 	}
+
+
+
 }
 
 export { init };
