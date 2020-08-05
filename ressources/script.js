@@ -2,7 +2,6 @@ import * as THREE from            './three.module.js';
 import { TrackballControls } from './TrackballControlsModule.js';
 import { GUI }               from './dat.gui.module.js';
 
-
 // --- GUI data
 var renderer, scene, light;   // Three.js rendering basics.
 var perspectiveCamera, orthographicCamera;
@@ -101,6 +100,55 @@ function getQueryVariable(variable)
        return(false);
 }
 
+// --------------------------------------------------------------------------------}
+// --- JSON/FILE DROP 
+// --------------------------------------------------------------------------------{
+if (window.File && window.FileReader && window.FileList && window.Blob) {
+  // Great success!
+  function handleJSONDrop(evt) {
+      console.log('>>>>>>>>>>>>> DROP')
+    evt.stopPropagation();
+    evt.preventDefault();
+    var files = evt.dataTransfer.files;
+      // Loop through the FileList and read
+      for (var i = 0, f; f = files[i]; i++) {
+  
+        // Only process json files.
+          if (!f.type.match('application/json')) {
+          continue;
+        }
+  
+        var reader = new FileReader();
+        // Closure to capture the file information.
+        reader.onload = (function(theFile) {
+          return function(e) {
+            var AJ = JSON.parse(e.target.result);
+            console.log(AJ);
+            createWorldFromJSON(AJ);
+          };
+        })(f);
+  
+        reader.readAsText(f);
+      }
+  }
+
+  function handleDragOver(evt) {
+      console.log('>>>>>>>>>>>>> DRAG OVER')
+    evt.stopPropagation();
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+  }
+
+  // Setup the dnd listeners.
+  var dropZone = document.getElementsByTagName('body')[0];
+  dropZone.addEventListener('dragover', handleDragOver, false);
+  dropZone.addEventListener('drop', handleJSONDrop, false);
+  
+
+} else {
+  alert('The File APIs are not fully supported in this browser.');
+}
+
 function loadJSONcallback(AJ, filename, callback) {   
     var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
@@ -120,24 +168,51 @@ function loadJSONcallback(AJ, filename, callback) {
         }
     };
     xobj.send(null);  
- }
-
+}
 /* Load object from json file to scene
  * NOTE: this is an async method, and thus there is no way to return something
  * */
 function jsonToObjects(filename){
     var AJ ;
-
     loadJSONcallback(AJ, filename, function(response, AJ) {
        // Parse JSON string into object
        try {
            AJ = JSON.parse(response);
+           createWorldFromJSON(AJ);
         }
         catch (e) { 
             //document.getElementById('mod').innerHTML="<h3><b>Sorry, WebGL is required but is not available.</b><h3>";
             alert('Error parsing JSON file: '+e)
             return;
         }
+     });
+}
+
+function onLoad(){
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept='.json';
+    input.onchange = e => { 
+       input_file = e.target.files[0].name; 
+       console.log(e)
+       console.log('input_file:',input_file);
+       jsonToObjects(input_file);
+    }
+    input.click();
+}
+
+
+
+
+/** */
+function createBasicWorld() {
+
+    renderer.setClearColor( 0 );  // black background
+    scene   = new THREE.Scene();
+}
+
+/** Create main World objects from a parsed Jason input **/
+function createWorldFromJSON(AJ) {
        //console.log('AJ',AJ)
        /* Elements */
 //        NOTE Keep Me
@@ -151,9 +226,6 @@ function jsonToObjects(filename){
 //        Displ[1] =  new THREE.Vector3(50,0,0.0);
 //        Connectivity= Array2D(nElem,2);
 //        Connectivity[0] = [0,1]
-
-
-
         Nodes        = AJ.Nodes       ;
         Modes        = AJ.Modes       ;
         Props        = AJ.ElemProps   ;
@@ -162,7 +234,6 @@ function jsonToObjects(filename){
         nNodes = Nodes.length;
         nElem  = Props.length;
         Elems = new Array(nElem); 
-
 
        // Clean scene
        while(scene.children.length > 0){ 
@@ -210,23 +281,10 @@ function jsonToObjects(filename){
            pp.children[i].onclick = modeSelect;
        }
        modelLoaded();
-
-     });
 }
 
-/**
- *  Creates the bouncing balls and the translucent cube in which the balls bounce,
- *  and adds them to the scene.  A light that shines from the direction of the
- *  camera's view is also bundled with the camera and added to the scene.
- */
-function createBasicWorld() {
 
-    renderer.setClearColor( 0 );  // black background
-    scene   = new THREE.Scene();
-}
-
-/**
-**/
+/** **/
 function createSeaLevelObject(width){
     var swl_geo = new THREE.PlaneGeometry(width, width, 2, 2)
     var swl_mat = new THREE.MeshBasicMaterial( {
@@ -733,17 +791,6 @@ Keyboard shortcuts:\n \
 }
 
 
-function onLoad(){
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept='.json';
-    input.onchange = e => { 
-       input_file = e.target.files[0].name; 
-       console.log('input_file:',input_file);
-       jsonToObjects(input_file);
-    }
-    input.click();
-}
 
 /**
  *  This init() function is called when by the onload event when the document has loaded.
@@ -809,7 +856,7 @@ function init() {
             console.log('input_file:',input_file);
             jsonToObjects(input_file);
         } else {
-            document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Use load to open a json file. </b></h3>";
+            document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Load a json file (Drag and Drop anywhere). </b></h3>";
             //alert('Use `load` to open a json file')
             //input_file ='my_data.json';
             //jsonToObjects(input_file);
