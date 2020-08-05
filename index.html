@@ -2,82 +2,48 @@
 <head>
 <meta charset="UTF-8">
 <title>Mode shape visualization</title>
+<link rel="stylesheet" href="ressources/styles.css">
 <style>
-    html, body {
-        margin: 0;  /* Make sure that there is no margin around the canvas */
-		overflow: hidden;  /* Make sure we don't get scroll bars. */
-    }
-    canvas {
-        display: block; /* The default display, inline, would add small margin below the canvas */
-    }
-    body {
-      background-color: black;
-      color: white;
-    }
-    legend {
-      padding: 0px;
-    }
-    fieldset {
-      padding: 0px;
-      padding-left: 0px;
-      margin-bottom: 10px;
-      display: block;
-      border: 0px;
-    }
+body{ }
 </style>
-<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
-<script src="three.min.js"></script>
-<script src="TrackballControls.js"></script>
-<script src="script.js"></script>
+<script src="ressources/three.min.js"></script>
+<script src="ressources/TrackballControlsOld.js"></script>
+<script src="ressources/script.js"></script>
 </head>
 <body onload="init()">
-<!-- Help
-Help
-Load
-Animate
-Play
-Pause
-Stop
--->
+<button style="margin-left: 2px" onclick="onLoad()" id='bt-load'>Load</button>
+<button style="margin-left: 2px" onclick="showHelp()">Help</button>
+<input id="file-input" type="file" name="name" style="display: none;" />
+
 <fieldset>
 <legend>Animation</legend>
-<input type="checkbox" id="animate">Animate</label>
-<input type="checkbox" id="animate">Animate</label>
-<label style='margin-left: 8px'>Speed: <input type="range"   id='set-dt' min="0" max="0.5" step="0.0005" value="0.1" size="12"></label>
-<label style='margin-left: 8px'>Amplitude: <input type="range"   id='set-ampl' min="0" max="4" step="0.1" value="1" size="8"></label>
+    <label style="margin-left: 2px"><input type="radio" name="anim" id="disp">Displaced</label>
+    <label style="margin-left: 2px"><input type="radio" name="anim" id="undisp">Undisplaced</label>
+    <label style="margin-left: 2px"><input type="radio" name="anim" id="animate">Animate</label>
+    <span style="margin-left: 5px">Speed:    </span><input class='slider' type="range"   id='set-dt' min="0" max="0.5" step="0.0005" value="0.1" size="6">
+    <span style="margin-left: 5px">Amplitude:</span><input class='slider' type="range"   id='set-ampl' min="0.001" max="4" step="0.1" value="1" size="6">
+    </div>
 </fieldset>
 <fieldset>
-<legend>View</legend>
-<label><input type="checkbox" id="show-axes">Axes</label>
-<label><input type="checkbox" id="show-seabed">Sea bed</label>
-<label><input type="checkbox" id="show-sealevel">Sea level</label>
-<button style="margin-left: 8px" onclick="xView()">Front (-x)</button>
-<button style="margin-left: 8px" onclick="zView()">Top (z)</button>
-<button style="margin-left: 8px" onclick="yView()">Side (y)</button>
-<button style="margin-left: 8px" onclick="resetControls()">Reset</button>
+    <legend>View</legend>
+    <label><input type="checkbox" id="show-box">Box</label>
+    <label><input type="checkbox" id="show-axes">Axes</label>
+    <label><input type="checkbox" id="show-seabed">Sea bed</label>
+    <label><input type="checkbox" id="show-sealevel">Sea level</label>
+    <button style="margin-left: 8px" onclick="xView()">Front (-x)</button>
+    <button style="margin-left: 8px" onclick="zView()">Top (z)</button>
+    <button style="margin-left: 8px" onclick="yView()">Side (y)</button>
+    <button style="margin-left: 8px" onclick="resetControls()">Reset</button>
+    <label><input type="checkbox" id="parallel-proj">Parallel projection</label>
 </fieldset>
 <fieldset>
-<legend>Modes</legend>
-<div id="mode-selection"></div>
+    <legend>Modes</legend>
+    <div id="mode-selection"></div>
 </fieldset>
 
 <div id="canvas-holder">
-<canvas id="maincanvas" ></canvas>
+    <canvas id="maincanvas" ></canvas>
 </div>
-
-
-
-<!-- Help
-<div id="help-content" style="display:none">
-<h3>Help</h3>
-<p>
-Some help text.
-</p>
-</div>
-<div id="help-icon" onclick="showHelp()">Help? </div>
-<div id="hide-help-icon" onclick="showHelp()">Help? </div>
--->
-
 
 </body>
 </html>

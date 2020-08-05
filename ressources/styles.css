@@ -1,0 +1,26 @@
+html, body {
+    margin: 0px;  /* Make sure that there is no margin around the canvas */
+    overflow: hidden;  /* Make sure we don't get scroll bars. */
+}
+canvas {
+    display: block; /* The default display, inline, would add small margin below the canvas */
+}
+body {
+  background-color: black;
+  color: white;
+}
+legend {
+  padding: 0px;
+  color: white;
+}
+fieldset {
+  padding: 0px;
+  padding-left: 0px;
+  margin-bottom: 3px;
+  display: block;
+  border: 0px;
+}
+.slider{
+  vertical-align: middle;
+}
+
