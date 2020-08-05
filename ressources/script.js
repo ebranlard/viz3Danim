@@ -181,23 +181,46 @@ function jsonToObjects(filename){
            createWorldFromJSON(AJ);
         }
         catch (e) { 
-            //document.getElementById('mod').innerHTML="<h3><b>Sorry, WebGL is required but is not available.</b><h3>";
             alert('Error parsing JSON file: '+e)
             return;
         }
      });
 }
 
+function readSingleFile(e) {
+  var f = e.target.files[0];
+  if (!f) {
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var AJ = JSON.parse(e.target.result);
+    console.log(AJ);
+    createWorldFromJSON(AJ);
+  };
+//     reader.onload = (function(theFile) {
+//       return function(e) {
+//         var AJ = JSON.parse(e.target.result);
+//         console.log(AJ);
+//         createWorldFromJSON(AJ);
+//       };
+//     })(f);
+
+  reader.readAsText(f);
+}
+
 function onLoad(){
     var input = document.createElement('input');
     input.type = 'file';
     input.accept='.json';
-    input.onchange = e => { 
-       input_file = e.target.files[0].name; 
-       console.log(e)
-       console.log('input_file:',input_file);
-       jsonToObjects(input_file);
-    }
+    input.addEventListener('change', readSingleFile, false);
+//     input.onchange = e => { 
+//         debugger;
+//        input_file = e.target.files[0].name; 
+//        console.log(e)
+//        console.log('input_file:',input_file);
+//        //jsonToObjects(input_file);
+//     }
     input.click();
 }
 
@@ -779,7 +802,7 @@ function modeSelect(){
 //----------------------------------------------------------------------------------
 function showHelp() {
     alert('General:\n \
- - Load an existing json file (or provide load= in the address bar)\n \
+ - Load an existing json file (load button or drag and drop)\n \
  - Chose Animation, View and Mode options \n \
  - The "z" axis is blue, the "x" axis is red \n\n \
 Keyboard shortcuts:\n \
@@ -856,8 +879,11 @@ function init() {
             console.log('input_file:',input_file);
             jsonToObjects(input_file);
         } else {
-            document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Load a json file (Drag and Drop anywhere). </b></h3>";
-            //alert('Use `load` to open a json file')
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Load a json file: drag and drop it anywhere, or use the load button. </b></h3>";
+            }else{
+                document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Load a json file using the load button. </b></h3>";
+            }
             //input_file ='my_data.json';
             //jsonToObjects(input_file);
         };
