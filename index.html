@@ -4,15 +4,19 @@
 <title>Mode shape visualization</title>
 <link rel="stylesheet" href="ressources/styles.css">
 <style>
-body{ }
+  body{ }
 </style>
-<script src="ressources/three.min.js"></script>
-<script src="ressources/TrackballControlsOld.js"></script>
-<script src="ressources/script.js"></script>
 </head>
-<body onload="init()">
-<button style="margin-left: 2px" onclick="onLoad()" id='bt-load'>Load</button>
-<button style="margin-left: 2px" onclick="showHelp()">Help</button>
+
+<script type="module">
+import  * as VIZ from  './ressources/script.js';
+VIZ.init();
+</script>
+
+
+<body>
+<button style="margin-left: 2px" id="bt-load">Load</button>
+<button style="margin-left: 2px" id="bt-help">Help</button>
 <input id="file-input" type="file" name="name" style="display: none;" />
 
 <fieldset>
@@ -30,10 +34,10 @@ body{ }
     <label><input type="checkbox" id="show-axes">Axes</label>
     <label><input type="checkbox" id="show-seabed">Sea bed</label>
     <label><input type="checkbox" id="show-sealevel">Sea level</label>
-    <button style="margin-left: 8px" onclick="xView()">Front (-x)</button>
-    <button style="margin-left: 8px" onclick="zView()">Top (z)</button>
-    <button style="margin-left: 8px" onclick="yView()">Side (y)</button>
-    <button style="margin-left: 8px" onclick="resetControls()">Reset</button>
+    <button style="margin-left: 8px" id="xView">Front (-x)</button>
+    <button style="margin-left: 8px" id="zView">Top (z)</button>
+    <button style="margin-left: 8px" id="yView">Side (y)</button>
+    <button style="margin-left: 8px" id="reset">Reset</button>
     <label><input type="checkbox" id="parallel-proj">Parallel projection</label>
 </fieldset>
 <fieldset>

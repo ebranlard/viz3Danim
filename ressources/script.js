@@ -1,4 +1,6 @@
-"use strict";
+import * as THREE from './three.module.js';
+import { TrackballControls } from './TrackballControlsModule.js';
+
 
 // --- GUI data
 var renderer, scene, light;   // Three.js rendering basics.
@@ -73,7 +75,7 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
         } 
     );
     var cyl     = new THREE.Mesh( cyl_geo, cyl_mat );
-    cyl.applyMatrix(arr[0])
+    cyl.applyMatrix4(arr[0])
     cyl.position.set(arr[1].x, arr[1].y, arr[1].z);
     cyl.updateMatrixWorld();
     return [cyl, s1, s2];
@@ -398,7 +400,6 @@ function zView() {
      var width  = window.innerWidth*1.0;
      var height = window.innerHeight*0.8;
      renderer.setSize(width, height);
-     console.log('>>> doResize Called')
      if (perspectiveCamera) {
         var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
         var aspect = width/ height;
@@ -428,7 +429,7 @@ function installTrackballControls(camera) {
     if (controls) {
         controls.dispose();
     }
-    controls = new THREE.TrackballControls(camera, canvas);  // note: TrackballControls require animation.
+    controls = new TrackballControls(camera, canvas);  // note: TrackballControls require animation.
     controls.noPan = false;   // Don't do panning with the right mosue button.
     controls.noZoom = false;  // Don't do zooming with middle mouse button.
     //controls.staticMoving = true;
@@ -436,8 +437,8 @@ function installTrackballControls(camera) {
     controls.zoomSpeed = 1.8; //default  1.2
     controls.rotateSpeed = 1.3; //default  1.0
 
+    // --- Listeners when animation is disabled
     function move() {
-        console.log('>>> move start')
         controls.update();
 		if (!animating) {
 			render();
@@ -568,11 +569,8 @@ function render() {
     renderer.render(scene, camera);
 }
 
+/**/
 function enableGUI() {
-    /**/
-    if (window.console) {
-        console.log('>>>>>>>> ENABLING GUI')
-    }
     doResize();
 
     // Default options
@@ -591,16 +589,12 @@ function enableGUI() {
     //render();
 }
 
+/**/
 function disableGUI() {
-    /**/
 
 }
 
-/**
- *  When an animation is in progress, this function is called just before rendering each
- *  frame of the animation.  In this case, the bouncing balls are moved by an amount
- *  
- */
+/** */
 function plotSceneAtTime() { 
    //var dt = clock.getDelta();  // time since last update
    //dt = 0.03;
@@ -754,6 +748,34 @@ function onLoad(){
  *  This init() function is called when by the onload event when the document has loaded.
  */
 function init() {
+    // --- GUI and Callbacks
+    //document.getElementById("DEBUG").innerHTML = 'Hello' ;
+    document.getElementById("animate").checked = animating;
+    document.getElementById("animate").onchange = doAnimationCheckbox;
+    document.getElementById("disp").checked = false;
+    document.getElementById("disp").onchange = doAnimationCheckbox;
+    document.getElementById("undisp").checked = false;
+    document.getElementById("undisp").onchange = doAnimationCheckbox;
+
+    document.getElementById("show-sealevel").checked = false;
+    document.getElementById("show-sealevel").onchange = showSeaLevel;
+    document.getElementById("show-seabed").checked = false;
+    document.getElementById("show-seabed").onchange = showSeaBed;
+    document.getElementById("show-axes").checked = true;
+    document.getElementById("show-axes").onchange = showAxes;
+    document.getElementById("show-box").checked = true;
+    document.getElementById("show-box").onchange = showBox;
+    document.getElementById("parallel-proj").checked = false;
+    document.getElementById("parallel-proj").onchange = changeCamera;
+    document.getElementById("set-dt").onchange = setDt;
+    document.getElementById("set-ampl").onchange = setAmplitudeFromSlider;
+    document.getElementById("xView").onclick = xView;
+    document.getElementById("yView").onclick = yView;
+    document.getElementById("zView").onclick = zView;
+    document.getElementById("reset").onclick = resetControls;
+    document.getElementById("bt-load").onclick = onLoad;
+    document.getElementById("bt-help").onclick = showHelp;
+
     try {
         try {
             canvas = document.getElementById("maincanvas");
@@ -779,27 +801,6 @@ function init() {
         // Create scene, camera, light
         createBasicWorld();
 
-        // --- GUI and Callbacks
-        //document.getElementById("DEBUG").innerHTML = 'Hello' ;
-        document.getElementById("animate").checked = animating;
-        document.getElementById("animate").onchange = doAnimationCheckbox;
-        document.getElementById("disp").checked = false;
-        document.getElementById("disp").onchange = doAnimationCheckbox;
-        document.getElementById("undisp").checked = false;
-        document.getElementById("undisp").onchange = doAnimationCheckbox;
-
-        document.getElementById("show-sealevel").checked = false;
-        document.getElementById("show-sealevel").onchange = showSeaLevel;
-        document.getElementById("show-seabed").checked = false;
-        document.getElementById("show-seabed").onchange = showSeaBed;
-        document.getElementById("show-axes").checked = true;
-        document.getElementById("show-axes").onchange = showAxes;
-        document.getElementById("show-box").checked = true;
-        document.getElementById("show-box").onchange = showBox;
-        document.getElementById("parallel-proj").checked = false;
-        document.getElementById("parallel-proj").onchange = changeCamera;
-        document.getElementById("set-dt").onchange = setDt;
-        document.getElementById("set-ampl").onchange = setAmplitudeFromSlider;
 
         // --- Install model
         var input_file = getQueryVariable("load");
@@ -818,3 +819,4 @@ function init() {
 	}
 }
 
+export { init };
