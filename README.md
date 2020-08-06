@@ -5,7 +5,7 @@ Input files are `json` files with an undocumented format for now, which may evol
 
 ## SubDyn modes visualization
 
-This described how to visualize the Guyan and CB modes in the SubDyn summary file.
+This describes how to visualize the Guyan and CB modes in the SubDyn summary file.
 
 ### Testing it
 If you want to try it out without cloning anything, some input files are located in the `examples` folder, you can drag and drop each of them to the web-app that I've hosted [here](https://ebranlard.github.io/viz3Danim/)
@@ -38,10 +38,10 @@ The python script and web-app are located in this repository (i.e. [here](https:
 -	Option 1: use the [internet demo version](https://ebranlard.github.io/viz3Danim/) and open the json file there
 -	Option 2: use the python script with `--open` flag to launch a local server 
 -	Option 3: create your own local server and open the json file manually: 
-
+```bash
       python -m http.server 8000   # launch a web server
       # then open a browser and navigate to https://localhost:8000/
-
+```
 
 
 ### Some notes:
