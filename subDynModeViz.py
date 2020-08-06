@@ -199,7 +199,7 @@ def subDyn2Json(subDynSumFile):
     jsonFile=os.path.splitext(subDynSumFile)[0]+'.json'
     print('>>> Writing json file: ',jsonFile)
     with open(jsonFile, 'w') as f:
-        json.dump(d, f, indent=2)
+        json.dump(d, f) #, indent=2)
 
 
 # --------------------------------------------------------------------------------}
@@ -377,7 +377,7 @@ class Server(object):
 
 def abort_with_usage():
     print(""" 
-usage: python subDynModeViz [--json-only] SUBDYN_sum.yaml
+usage: python subDynModeViz [--open] SUBDYN_sum.yaml
 
 Create a json file with mode shapes from a Subdyn sum file. 
 Potentially animate the modes in the browser.
@@ -386,7 +386,7 @@ where:
    SUBDYN_sum.yaml : summary file from subdyn 
 
 options:
-   --json-only : do not open web browser.
+   --open : open in web browser, creates server.
 
     """)
     sys.exit(-1)
@@ -394,18 +394,18 @@ options:
 if __name__ == '__main__':
     if len(sys.argv) not in [2,3] :
         abort_with_usage()
-    elif len(sys.argv) == 3 and sys.argv[1]!='--json-only' :
+    elif len(sys.argv) == 3 and sys.argv[1]!='--open' :
         abort_with_usage()
-    elif len(sys.argv) == 2:
-        subDyn2Json(sys.argv[1])
+    elif len(sys.argv) == 3:
+        subDyn2Json(sys.argv[2])
         # open server and launch it in browser
-        filename = os.path.abspath(sys.argv[1])
+        filename = os.path.abspath(sys.argv[2])
         basedir=os.path.dirname(filename)
         scene_json_file = os.path.splitext(filename)[0]+'.json'
         scene_json_file = os.path.relpath(scene_json_file, basedir);
         server = Server(scene_file=scene_json_file, directory=basedir)
         server.run_server()
 
-    elif len(sys.argv) == 3:
-        subDyn2Json(sys.argv[2])
+    elif len(sys.argv) == 2:
+        subDyn2Json(sys.argv[1])
 
