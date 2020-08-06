@@ -11,6 +11,7 @@ var canvas;   // The canvas on which the renderer will draw.
 var controls; // an object of type TrackballControls, the handles rotation using the mouse.
 var gui, guiTop, MainMenu; // Menu
 var frustumSize
+var windowWidth, windowHeight;
 
 // --- Script data
 var params = {
@@ -24,6 +25,7 @@ var params = {
     showAxes: true, 
     showSeaBed: false, 
     showSeaLevel: false, 
+    showThreeViews: false, 
 };
 
 // --- GUI objects
@@ -39,6 +41,50 @@ var Connectivity  ;  // Connectivity mapping
 var iMode, Modes, Displ;  // Modes data
 var groundLevel;
 
+var vsplit=0.3
+var hsplit=0.333333
+
+var defaultView =  {
+        left: 0,
+        bottom: 0, 
+        width: 1.0,
+        height: 1.0,
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
+    };
+
+var views = [
+    {
+        left: 0,
+        bottom: vsplit, 
+        width: 1.0,
+        height: 1.0-vsplit,
+        //background: new THREE.Color( 0.5, 0.5, 0.7 ),
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
+    },
+    {
+        left: 0.0,
+        bottom: 0,
+        width: hsplit,
+        height: vsplit,
+        //background: new THREE.Color( 0.7, 0.5, 0.5 ),
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
+    },
+    {
+        left: hsplit,
+        bottom: 0,
+        width:  hsplit,
+        height: vsplit,
+        //background: new THREE.Color( 0.5, 0.7, 0.7 ),
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
+    },
+    {
+        left: 2*hsplit,
+        bottom: 0,
+        width: hsplit,
+        height: vsplit,
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
+    }
+];
 
 /** */
 function createBasicWorld() {
@@ -159,36 +205,43 @@ function createWorldFromJSONStream(Jstream) {
     }
 }
 
-function changeCamera(){
-    createControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
+function togglePerspective(){
+    views[0].camera = params.orthographicCamera ? orthographicCamera : perspectiveCamera;
+    createControls( views[0].camera )
+    if (!params.animating) {
+        plotSceneAtTime();
+    }
 }
 /* Crete camera, light and view controls */
 function createCamera(){
 
-    var width = canvas.width;
-    var height = canvas.height;
+    var width  = windowWidth
+    var height = windowHeight
     var AR = width/height;
-    if (AR >1 ) {
-        var h = extent.maxDim*2.0;
-        var w = h*AR;
-    }else{
-        var w = extent.maxDim*2.0;
-        var h = w/AR;
-    }
+    var h = height;
+    var w = width;
+//     if (AR >1 ) {
+//         var h = extent.maxDim*2.0;
+//         var w = h*AR;
+//     }else{
+//         var w = extent.maxDim*2.0;
+//         var h = w/AR;
+//     }
     frustumSize = extent.maxDim*2.0
     orthographicCamera = new THREE.OrthographicCamera(
-         -w/2+extent.centerX, w/2+extent.centerX,
-        h/2+extent.centerY, -h/2+extent.centerY, 
+         -w/2+extent.centerX,  w/2+extent.centerX,
+          h/2+extent.centerY, -h/2+extent.centerY, 
         -extent.maxDim*50, 
         extent.maxDim*50);
-     orthographicCamera.position.set(extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
+    perspectiveCamera  = new THREE.PerspectiveCamera(40, windowWidth/windowHeight, extent.maxDim*0.005, extent.maxDim*50);
 
-     perspectiveCamera  = new THREE.PerspectiveCamera(40, canvas.width/canvas.height, extent.maxDim*0.005, extent.maxDim*50);
-     perspectiveCamera.position.set(extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
+    // Default view
+    perspectiveCamera  = camDefView(perspectiveCamera);
+    orthographicCamera = camDefView(orthographicCamera);
+
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    //camera.lookAt(scene.position); //camera.lookAt(new THREE.Vector3(0,0,0));
-    camera.lookAt(new THREE.Vector3(extent.centerX,extent.centerY,extent.centerZ));
-    scene.add(camera);
+    //scene.add(camera);
+    views[0].camera = camera; 
 
     // Ambient light
     scene.add(new THREE.AmbientLight(0xFFFFFF, 0.5));
@@ -206,6 +259,74 @@ function createCamera(){
 
     // Trackball controls
     createControls(camera);
+    // --- Create the 3 orthographic cameras
+    // -x
+    views[1].camera = orthographicCamera.clone();
+    views[1].camera = camXView(views[1].camera);
+    // y
+    views[2].camera = orthographicCamera.clone();
+    views[2].camera = camYView(views[2].camera);
+    // z
+    views[3].camera = orthographicCamera.clone();
+    views[3].camera = camZView(views[3].camera);
+}
+function toggleThreeViews(v){
+    if (params.showThreeViews) {
+        // pass
+    } else {
+        // Using default views
+        //updateSize(); 
+        var left   = Math.floor( windowWidth  * defaultView.left );
+        var bottom = Math.floor( windowHeight * defaultView.bottom );
+        var width  = Math.floor( windowWidth  * defaultView.width );
+        var height = Math.floor( windowHeight * defaultView.height );
+        renderer.setViewport( left, bottom, width, height );
+        renderer.setScissor ( left, bottom, width, height );
+        renderer.setScissorTest( true );
+        renderer.setClearColor( defaultView.background );
+        perspectiveCamera  = updatePerspCam(perspectiveCamera,  width, height);
+        orthographicCamera = updateOrthoCam(orthographicCamera, width, height);
+        controls.handleResize();
+    }
+    if (!params.animating) {
+        plotSceneAtTime();
+    }
+}
+
+function camDefView(camera){
+    camera.position.set( extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
+    camera.lookAt      ( extent.centerX, extent.centerY                    , extent.centerZ);
+    return camera;
+}
+function camXView(camera){//  OpenFAST "-x" view is three z view
+    camera.position.set( extent.centerX, extent.centerY ,extent.centerZ + extent.maxDim*3);
+    camera.lookAt      ( extent.centerX, extent.centerY, extent.centerZ                  );
+    return camera;
+}
+function camXViewB(camera){//  OpenFAST "-x" view is three z view
+    camera.position.set( extent.centerX, extent.centerY*0,extent.maxDim*3);
+    camera.lookAt      ( extent.centerX, extent.centerY, extent.centerZ );
+    return camera;
+}
+function camYView(camera){ // OpenFAST "y" view is three -x view
+    camera.position.set( extent.centerX-extent.maxDim*3, extent.centerY, extent.centerZ);
+    camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
+    return camera;
+}
+function camYBView(camera){ // OpenFAST "y" view is three -x view
+    camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
+    camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
+    return camera;
+}
+function camZView(camera){ // OpenFAST "z" view is three y view // NOTE: rotation matrix sensitive
+    camera.position.set( extent.centerX, extent.centerY+extent.maxDim*3, extent.centerZ+0.0001); 
+    camera.lookAt      ( extent.centerX, extent.centerY                , extent.centerZ+0.0001);
+    return camera;
+}
+function camZBView(camera){ // OpenFAST "z" view is three y view // NOTE: rotation matrix sensitive
+    camera.position.set( 0.0000        , extent.maxDim*3               , extent.centerZ+0.0001);
+    camera.lookAt      ( extent.centerX, extent.centerY                , extent.centerZ+0.0001);
+    return camera;
 }
 
 
@@ -215,58 +336,75 @@ function resetControls() {
       plotSceneAtTime();
     }
 }
-// OpenFAST "-x" view is three z view
 function xView() {
-    controls.reset();
+    //controls.reset();
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera.position.set(extent.centerX,extent.centerY*0,extent.maxDim*3);
+    camera = camXViewB(camera);
     camera.updateProjectionMatrix();
     if (!params.animating) {
       plotSceneAtTime();
     }
 }
-
-// OpenFAST "y" view is three -x view
 function yView() {
     controls.reset();
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
+    camera = camYBView(camera);
+    camera.updateProjectionMatrix();
+    if (!params.animating) {
+      plotSceneAtTime();
+    }
+}
+function zView() {
+    controls.reset();
+    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+    camera = camZBView(camera);
     camera.updateProjectionMatrix();
     if (!params.animating) {
       plotSceneAtTime();
     }
 }
 
-// OpenFAST "z" view is three y view
-function zView() {
-    controls.reset();
-    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera.position.set(0.0000, extent.maxDim*3,extent.centerZ+0.0001); // NOTE: rotation matrix sensitive
+function getAvailableSpace(){
+    console.log('Window : ',window.innerWidth,window.innerHeight )
+    console.log('Canvas : ',canvas.width,canvas.height )
+    console.log('topRow : ', document.getElementById('topRow').offsetWidth, document.getElementById('topRow').offsetHeight)
+    var width  = window.innerWidth ;
+    var height = window.innerHeight- document.getElementById('topRow').offsetHeight-25;
+    return [width,height]
+}
+
+function updateOrthoCam(camera, w, h){
+    var aspect = w/h;
+    camera.left   = - frustumSize * aspect / 2;
+    camera.right  =   frustumSize * aspect / 2;
+    camera.top    =   frustumSize / 2;
+    camera.bottom = - frustumSize / 2;
     camera.updateProjectionMatrix();
-    if (!params.animating) {
-      plotSceneAtTime();
-    }
+    return camera;
+}
+function updatePerspCam(camera, w, h){
+    var aspect = w/h;
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix(); // Need to call this for the change in aspect to take effect.
+    return camera
 }
 
 //----------------------- respond to window resizing -------------------------------
 /* Adjust camera and canva size after resize */
  function onWindowResize() {
-     var width  = window.innerWidth*1.0;
-     var height = window.innerHeight*0.9;
-     renderer.setSize(width, height);
+     var WH = getAvailableSpace();
+     // Storing space size
+     windowWidth  = WH[0];
+     windowHeight = WH[1];
+     // Update renderer
+     renderer.setSize(WH[0], WH[1]);
      if (perspectiveCamera) {
-        var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-        var aspect = width/ height;
-
-        perspectiveCamera.aspect = width/ height;
-        perspectiveCamera.updateProjectionMatrix(); // Need to call this for the change in aspect to take effect.
-
-        orthographicCamera.left   = - frustumSize * aspect / 2;
-        orthographicCamera.right  =   frustumSize * aspect / 2;
-        orthographicCamera.top    =   frustumSize / 2;
-        orthographicCamera.bottom = - frustumSize / 2;
-        orthographicCamera.updateProjectionMatrix();
-
+         // Update camera aspect ratios
+        perspectiveCamera  = updatePerspCam(perspectiveCamera,  WH[0], WH[1]);
+        orthographicCamera = updateOrthoCam(orthographicCamera, WH[0], WH[1]);
+        for ( var ii = 1; ii < views.length; ++ ii ) {             
+            views[ii].camera = updateOrthoCam(views[ii].camera, WH[0], WH[1]);
+        }
         controls.handleResize();
      }
  }
@@ -330,11 +468,35 @@ function setupKeyboardControls() {
   };
 }
 
-
 /** Render the scene adter object update  */
 function render() {
-    var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    renderer.render(scene, camera);
+    if (params.showThreeViews) {
+        for ( var ii = 0; ii < views.length; ++ ii ) {
+            var view = views[ ii ];
+            var camera = view.camera;
+            var left   = Math.floor( windowWidth  * view.left );
+            var bottom = Math.floor( windowHeight * view.bottom );
+            var width  = Math.floor( windowWidth  * view.width );
+            var height = Math.floor( windowHeight * view.height );
+            renderer.setViewport( left, bottom, width, height );
+            renderer.setScissor( left, bottom, width, height );
+            renderer.setScissorTest( true );
+            renderer.setClearColor( view.background );
+            if (ii==0) {
+                if (params.orthographicCamera){
+                    camera  = updateOrthoCam(camera, width, height);
+                }else{
+                    camera  = updatePerspCam(camera, width, height);
+                }
+                controls.handleResize();
+            } else {
+            }
+            renderer.render( scene, camera );
+        }
+    } else {
+        var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+        renderer.render(scene, camera);
+    }
 }
 
 /**/
@@ -350,6 +512,7 @@ function enableGUI() {
     showHide(params.showAxes ,    axes);
     showHide(params.showSeaBed,   grd);
     showHide(params.showSeaLevel, swl);
+    togglePerspective();
 
     // Show options, hide main menu
     gui.closed = false;
@@ -391,10 +554,11 @@ function setupGUI(){
     var folder = gui.addFolder('View');
     //folder.add(params, 'showBox'     ).name('Box'      ).onChange(function(v) {showHide(v,box)} ).listen();
     folder.add({xView:xView}, 'xView').name('Front (-x)');
-    folder.add({zView:zView}, 'zView').name('Top (z)');
     folder.add({yView:yView}, 'yView').name('Side (y)');
+    folder.add({zView:zView}, 'zView').name('Top (z)');
     folder.add({reset:resetControls}, 'reset').name('Reset');
-    folder.add(params, 'orthographicCamera' ).name('Parallel projection').onChange(changeCamera);
+    folder.add(params, 'orthographicCamera' ).name('Parallel projection').onChange(togglePerspective);
+    folder.add(params, 'showThreeViews').name('2D views').onChange(toggleThreeViews).listen();
     folder.open();
 
     var folder = gui.addFolder('Mode shape animation');
@@ -557,7 +721,7 @@ function init() {
         // --- If canvas is not provided by to renderer
         //canvas = renderer.domElement;  // The canvas was created by the renderer.
         //renderer.setSize(window.innerWidth, window.innerHeight);  // match size of canvas to window
-        //renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setPixelRatio( window.devicePixelRatio );
         //document.body.appendChild(canvas);  // The canvas must be added to the body of the page.
 
         window.addEventListener("resize", onWindowResize, false);  // Set up handler for resize event

@@ -7,7 +7,7 @@ canvas {
     display: block; /* The default display, inline, would add small margin below the canvas */
 }
 body {
-  background-color: black;
+  background-color: blue;
   color: white;
 }
 legend {
