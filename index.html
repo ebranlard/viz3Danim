@@ -5,8 +5,42 @@
 <link rel="stylesheet" href="ressources/styles.css">
 <style>
   body{
-  background-color: blue;
+  background-color: black;
   }
+#guiTopRight {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+#guiTopLeft {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+#guiBottomRight{ 
+    position: absolute;
+    bottom: 20px;
+    right: 0px;
+}
+#guiBottomLeft{ 
+    position: absolute;
+    bottom: 20px;
+    left: 0px;
+}
+#guiTopRow > div{min-height: 25px; height: 25px; width: 100%; } 
+#guiTopRow > div > ul  {position: absolute; z-index: 0;}
+#guiTopRow > div > ul { display: table-row;  }
+#guiTopRow > div > ul > li { display: table-cell; min-width:100px ;padding-left: 0px;padding-right:1px}
+#guiTopRow > div > ul > li.cr { background: none; line-height: normal; vertical-align: top; border-left: 0px !important;border-bottom: 0px}
+#guiTopRow > div > ul > li.cr >div { background: #1a1a1a; height: 27px !important;padding-left: 6px;}
+#guiTopRow > div > ul > li.cr > div > span.property-name{padding-top: 6px; }
+#guiTopRow > div > ul > li.cr.string >div { border-left:4px solid green; }
+#guiTopRow > div > ul > li.cr.number >div { border-left:4px solid blue;}
+#guiTopRow > div > ul > li.cr.function >div { border-left:4px solid red;}
+#guiTopRow > div > ul > li.cr.color >div { border-left:4px solid orange;}
+#guiTopRow > div > ul > li.cr.boolean>div { border-left:4px solid purple;}
+#guiTopRow .close-button { display:none;}         
+
 </style>
 </head>
 
@@ -17,31 +51,8 @@ VIZ.init();
 
 
 <body>
-<button style="margin-left: 2px" id="bt-load">Load</button>
-<button style="margin-left: 2px" id="bt-help">Help</button>
+<div id="guiTopRow"></div>
 <input id="file-input" type="file" name="name" style="display: none;" />
-
-<fieldset>
-<legend>Animation</legend>
-    <label style="margin-left: 2px"><input type="radio" name="anim" id="disp">Displaced</label>
-    <label style="margin-left: 2px"><input type="radio" name="anim" id="undisp">Undisplaced</label>
-    <label style="margin-left: 2px"><input type="radio" name="anim" id="animate">Animate</label>
-    <span style="margin-left: 5px">Speed:    </span><input class='slider' type="range"   id='set-dt' min="0" max="0.5" step="0.0005" value="0.1" size="6">
-    <span style="margin-left: 5px">Amplitude:</span><input class='slider' type="range"   id='set-ampl' min="0.001" max="4" step="0.1" value="1" size="6">
-    </div>
-</fieldset>
-<fieldset>
-    <legend>View</legend>
-    <label><input type="checkbox" id="show-box">Box</label>
-    <label><input type="checkbox" id="show-axes">Axes</label>
-    <label><input type="checkbox" id="show-seabed">Sea bed</label>
-    <label><input type="checkbox" id="show-sealevel">Sea level</label>
-    <button style="margin-left: 8px" id="xView">Front (-x)</button>
-    <button style="margin-left: 8px" id="zView">Top (z)</button>
-    <button style="margin-left: 8px" id="yView">Side (y)</button>
-    <button style="margin-left: 8px" id="reset">Reset</button>
-    <label><input type="checkbox" id="parallel-proj">Parallel projection</label>
-</fieldset>
 <fieldset>
     <legend>Modes</legend>
     <div id="mode-selection"></div>
@@ -50,5 +61,9 @@ VIZ.init();
 <div id="canvas-holder">
     <canvas id="maincanvas" ></canvas>
 </div>
+<div id="guiTopLeft"></div>
+<div id="guiTopRight"></div>
+<div id="guiBottomRight"></div>
+<div id='guiBottomLeft'></div>
 </body>
 </html>

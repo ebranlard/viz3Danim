@@ -5,14 +5,26 @@ import * as PLT              from './helpers3D.js';
 import * as WEB              from './helpersWEB.js';
 
 // --- GUI data
-var renderer, scene, light;   // Three.js rendering basics.
+var renderer, scene;   // Three.js rendering basics.
 var perspectiveCamera, orthographicCamera;
-var params = {
-    orthographicCamera: false
-};
 var canvas;   // The canvas on which the renderer will draw.
 var controls; // an object of type TrackballControls, the handles rotation using the mouse.
+var gui, guiTop, MainMenu; // Menu
 var frustumSize
+
+// --- Script data
+var params = {
+    orthographicCamera: false, // Use parallel projection
+    animating: true, // animating
+    dt: 0.03, // time step
+    time: 0, //  time
+    amplitude: 1.0, // amplitude
+    animID: "Loop",
+    showBox: true, 
+    showAxes: true, 
+    showSeaBed: false, 
+    showSeaLevel: false, 
+};
 
 // --- GUI objects
 var swl, grd ; // Main WT elements
@@ -20,22 +32,12 @@ var axes     ; // Axes
 var box     ; // Surrounding box
 var extent
 
-// --- Misc data
-var animating = true; // Animates or not
-var dt =0.03 ;        // Time step
-var time =0 ;         
-var amplitude = 1.0 ;  // Amplitude of modes
-
 // --- FEM / JSON data for mode shapes
 var nElem,  Elems, Props ;  // Elements and ElementProperties
 var nNodes, Nodes ;  // Nodes
 var Connectivity  ;  // Connectivity mapping
 var iMode, Modes, Displ;  // Modes data
 var groundLevel;
-
-
-
-
 
 
 /** */
@@ -110,7 +112,7 @@ function createWorldFromJSONStream(Jstream) {
         var pp= document.getElementById('mode-selection');
         var labels='';
         for (var i = 0; i < Modes.length; i++) {
-            labels+='<label style="margin-left: 2px"><input type="radio" name="mode" id="'+i+'"'
+            labels+='<label class="radio"><input type="radio" name="mode" id="'+i+'"'
             if (i==0){
                 iMode =i // We select the first mode
                 labels+=' checked="checked"';
@@ -158,12 +160,10 @@ function createWorldFromJSONStream(Jstream) {
 }
 
 function changeCamera(){
-    params.orthographicCamera = document.getElementById('parallel-proj').checked;
     createControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
 }
 /* Crete camera, light and view controls */
 function createCamera(){
-    params.orthographicCamera = document.getElementById('parallel-proj').checked;
 
     var width = canvas.width;
     var height = canvas.height;
@@ -190,10 +190,19 @@ function createCamera(){
     camera.lookAt(new THREE.Vector3(extent.centerX,extent.centerY,extent.centerZ));
     scene.add(camera);
 
-    // light
-    light   = new THREE.DirectionalLight();
-    light.position.set(0,extent.maxDim*1.5,extent.maxDim*1.5);
-	camera.add(light);
+    // Ambient light
+    scene.add(new THREE.AmbientLight(0xFFFFFF, 0.5));
+    // Main light
+    const lightTop   = new THREE.DirectionalLight(0xffffff, 2.0);
+    lightTop.position.set(0,extent.centerY + extent.maxDim*3,extent.maxDim);
+	scene.add(lightTop);
+    //     const helperTop = new THREE.DirectionalLightHelper(lightTop);
+    //     scene.add(helperTop);
+    //     const lightSea   = new THREE.DirectionalLight(0x3267ca, 2.8);
+    //     const skyColor = 0xB1E1FF;  // light blue
+    //     const groundColor = 0xB97A20;  // brownish orange
+    //     var lightHemi = new THREE.HemisphereLight(skyColor, groundColor, 1);
+    //     scene.add(lightHemi);
 
     // Trackball controls
     createControls(camera);
@@ -202,7 +211,7 @@ function createCamera(){
 
 function resetControls() {
     controls.reset();
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
@@ -212,7 +221,7 @@ function xView() {
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     camera.position.set(extent.centerX,extent.centerY*0,extent.maxDim*3);
     camera.updateProjectionMatrix();
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
@@ -223,7 +232,7 @@ function yView() {
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
     camera.updateProjectionMatrix();
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
@@ -234,7 +243,7 @@ function zView() {
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     camera.position.set(0.0000, extent.maxDim*3,extent.centerZ+0.0001); // NOTE: rotation matrix sensitive
     camera.updateProjectionMatrix();
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
@@ -243,7 +252,7 @@ function zView() {
 /* Adjust camera and canva size after resize */
  function onWindowResize() {
      var width  = window.innerWidth*1.0;
-     var height = window.innerHeight*0.8;
+     var height = window.innerHeight*0.9;
      renderer.setSize(width, height);
      if (perspectiveCamera) {
         var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
@@ -278,7 +287,7 @@ function createControls(camera) {
     // --- Listeners when animation is disabled
     function move() {
         controls.update();
-		if (!animating) {
+		if (!params.animating) {
 			render();
 		}
     }
@@ -306,16 +315,16 @@ function setupKeyboardControls() {
   document.onkeydown = function(e) {
     switch (e.keyCode) {
       case 65: // 'a' increae amplitude
-          setAmplitudeFromJS( amplitude + 0.1*amplitude);
+          setAmplitudeFromJS( params.amplitude + 0.1*params.amplitude);
           break;
       case 68: // 'd' decrease amplidue
-          setAmplitudeFromJS( amplitude - 0.1*amplitude);
+          setAmplitudeFromJS( params.amplitude - 0.1*params.amplitude);
           break;
       case 83: // 's' slow down
-          setDtFromJS(dt - 0.1*dt);
+          setDtFromJS(params.dt - 0.1*params.dt);
           break;
       case 87: // 'w' incease speed
-          setDtFromJS(dt + 0.1*dt);
+          setDtFromJS(params.dt + 0.1*params.dt);
           break;
     }
   };
@@ -334,20 +343,17 @@ function enableGUI() {
 
     // Default options
     //animating = true; // Animates or not
-    time =0 ;         
+    params.time =0 ;         
     setDtFromJS(0.03) ;        // Time step
     setAmplitudeFromJS(1.0) ;  // Amplitude of modes
-    setDt();
-    setAmplitudeFromSlider();
-    showSeaLevel();
-    showSeaBed();
-    showAxes();
-    showBox();
+    showHide(params.showBox   ,   box);
+    showHide(params.showAxes ,    axes);
+    showHide(params.showSeaBed,   grd);
+    showHide(params.showSeaLevel, swl);
 
-    //var gui = new GUI();
-    //gui.add( params, 'orthographicCamera' ).name('Parrallel projection').onChange( function ( value ) {
-    //    createControls( value ? orthographicCamera : perspectiveCamera );
-    //} );
+    // Show options, hide main menu
+    gui.closed = false;
+    MainMenu.close();
 
     // --- Animate
     requestAnimationFrame(doFrame);  // Start the animation.
@@ -359,6 +365,55 @@ function disableGUI() {
 
 }
 
+
+function setupGUI(){
+
+    GUI.DEFAULT_WIDTH = 165;
+    GUI.TEXT_CLOSED = 'Close options';
+    GUI.TEXT_OPEN   = 'Show options';
+
+    // --- Top Menu
+    guiTop = new GUI({autoPlace: false, width:90});
+    MainMenu = guiTop.addFolder('Menu.', "a");
+    MainMenu.add({ Load:onLoad}, 'Load').name('Load json');
+    MainMenu.add({ Help:showHelp}, 'Help');
+    document.getElementById('guiTopRow').appendChild(guiTop.domElement);
+
+    // --- Option Menu (Top right)
+    gui = new GUI({autoPlace: false, width: 165});
+    var folder = gui.addFolder('Elements');
+    folder.add(params, 'showBox'     ).name('Box'      ).onChange(function(v) {showHide(v,box)} ).listen();
+    folder.add(params, 'showAxes'    ).name('Axes'     ).onChange(function(v) {showHide(v,axes)}).listen();
+    folder.add(params, 'showSeaBed'  ).name('Sea bed  ').onChange(function(v) {showHide(v,grd)} ).listen();
+    folder.add(params, 'showSeaLevel').name('Sea level').onChange(function(v) {showHide(v,swl)} ).listen();
+    folder.open();
+
+    var folder = gui.addFolder('View');
+    //folder.add(params, 'showBox'     ).name('Box'      ).onChange(function(v) {showHide(v,box)} ).listen();
+    folder.add({xView:xView}, 'xView').name('Front (-x)');
+    folder.add({zView:zView}, 'zView').name('Top (z)');
+    folder.add({yView:yView}, 'yView').name('Side (y)');
+    folder.add({reset:resetControls}, 'reset').name('Reset');
+    folder.add(params, 'orthographicCamera' ).name('Parallel projection').onChange(changeCamera);
+    folder.open();
+
+    var folder = gui.addFolder('Mode shape animation');
+    folder.add(params,  'dt'       , 0.0001, 0.5).name( 'Freq. (w/s)').listen()
+    folder.add(params,  'amplitude', 0.0001, 10 ).name( 'Ampl. (a/d)').listen().onChange(
+
+        function(v){if(!params.animating){plotSceneAtTime();}}
+    );
+    folder.add(params, 'animID', [ 'Loop', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
+    //     folder.add(settings, 'speed', { Low: 0, Med: 0.5, High: 1 } );
+    folder.open( );
+
+    document.getElementById('guiTopRight').appendChild(gui.domElement);
+
+    gui.closed = true;
+    MainMenu.close();
+}
+
+
 /** */
 function plotSceneAtTime() { 
    //dt = 0.03;
@@ -366,7 +421,7 @@ function plotSceneAtTime() {
    for (var iElem = 0; iElem < nElem; iElem++) {
       var i1 = Connectivity[iElem][0]
       var i2 = Connectivity[iElem][1]
-      var fact = amplitude * Math.sin(Modes[iMode].omega * time)
+      var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time)
       // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
       var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
       var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
@@ -381,100 +436,76 @@ function plotSceneAtTime() {
 
 //--------------------------- animation support -----------------------------------
 function doFrame() {
-    if (animating) {
-        time=time+dt;
+    if (params.animating) {
+        params.time=params.time+params.dt;
         plotSceneAtTime();
         requestAnimationFrame(doFrame); 
     }
 }
-
 function startAnimation() {
-    if (!animating) {
+    if (!params.animating) {
        //prevTime = Date.now();
-	   animating = true;
+	   params.animating = true;
        //prevMixerTime = Date.now();
 	   requestAnimationFrame(doFrame);
 	}
 }
-
 function pauseAnimation() {
-	if (animating) {
-	    animating = false;
+	if (params.animating) {
+	    params.animating = false;
 	}
 }
-
-function doAnimationCheckbox() {
-    //var anim = document.getElementById("animate").checked
-    var animID = document.querySelector('input[name="anim"]:checked').id;
-    if ( animID=='animate' ) {
+function animationSwitch() {
+    if ( params.animID=='Loop' ) {
     	startAnimation();
     }
     else {
     	pauseAnimation();
-        if ( animID=='disp' ) {
-           time = Math.PI/(2*Modes[iMode].omega);
+        if ( params.animID=='Max' ) {
+           params.time = Math.PI/(2*Modes[iMode].omega);
         }else{
-           time=0;
+           params.time=0;
         }
         plotSceneAtTime();
     }
 }
-function setDt() { 
-    dt = parseFloat(document.getElementById('set-dt').value);
-    dt /= 2;
-}
 function setAmplitudeFromSlider() { 
-    amplitude = parseFloat(document.getElementById('set-ampl').value);
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
 function setAmplitudeFromJS(ampl_in) { 
     // Set global variable
-    amplitude = Math.max(Math.min(ampl_in, 10),0.001) ;
-    // set HTML element
-    document.getElementById('set-ampl').value=amplitude;
+    params.amplitude = Math.max(Math.min(ampl_in, 10),0.001) ;
     // replot scene
-    if (!animating) {
+    if (!params.animating) {
       plotSceneAtTime();
     }
 }
 function setDtFromJS(dt_in) { 
     // Set global variable
-    dt = Math.max(Math.min(dt_in, 10),0.0001) ;
+    params.dt = Math.max(Math.min(dt_in, 10),0.0001) ;
     // set HTML element
-    document.getElementById('set-dt').value=dt;
 }
 
 
 //----------------------- show/hide elements -------------------------------
-function showHide(elem, elem_name) {
-    if (document.getElementById(elem_name).checked) {
-    	elem.visible=true;
-    }
-    else {
-    	elem.visible=false;
-    }
+function showHide(v, elem) {
+    elem.visible=v;
     render();
 }
-function showSeaLevel(){ showHide(swl,'show-sealevel'); }
-function showSeaBed()  { showHide(grd,'show-seabed'); }
-function showAxes()    { showHide(axes,'show-axes'); }
-function showBox()     { showHide(box,'show-box'); }
-
 function modeSelect(){
     iMode = parseInt(document.querySelector('input[name="mode"]:checked').id);
-    if (!animating) {
-        var animID = document.querySelector('input[name="anim"]:checked').id;
-        if ( animID=='disp' ) {
-            time = Math.PI/(2*Modes[iMode].omega);
+    if (!params.animating) {
+        if ( params.animID=='Max' ) {
+            params.time = Math.PI/(2*Modes[iMode].omega);
         }else{
-            time=0;
+            params.time=0;
         }
         plotSceneAtTime();
     }
     else{
-        time = 0;
+        params.time = 0;
     }
 }
 //----------------------------------------------------------------------------------
@@ -504,34 +535,12 @@ function documentAlert(message){
 function init() {
     // --- GUI and Callbacks
     //document.getElementById("DEBUG").innerHTML = 'Hello' ;
-    document.getElementById("animate").checked = animating;
-    document.getElementById("animate").onchange = doAnimationCheckbox;
-    document.getElementById("disp").checked = false;
-    document.getElementById("disp").onchange = doAnimationCheckbox;
-    document.getElementById("undisp").checked = false;
-    document.getElementById("undisp").onchange = doAnimationCheckbox;
-    document.getElementById("show-sealevel").checked = false;
-    document.getElementById("show-sealevel").onchange = showSeaLevel;
-    document.getElementById("show-seabed").checked = false;
-    document.getElementById("show-seabed").onchange = showSeaBed;
-    document.getElementById("show-axes").checked = true;
-    document.getElementById("show-axes").onchange = showAxes;
-    document.getElementById("show-box").checked = true;
-    document.getElementById("show-box").onchange = showBox;
-    document.getElementById("parallel-proj").checked = false;
-    document.getElementById("parallel-proj").onchange = changeCamera;
-    document.getElementById("set-dt").onchange = setDt;
-    document.getElementById("set-ampl").onchange = setAmplitudeFromSlider;
-    document.getElementById("xView").onclick = xView;
-    document.getElementById("yView").onclick = yView;
-    document.getElementById("zView").onclick = zView;
-    document.getElementById("reset").onclick = resetControls;
-    document.getElementById("bt-load").onclick = onLoad;
-    document.getElementById("bt-help").onclick = showHelp;
+    //document.getElementById("xView").onclick = xView;
     // Setup the drag and drop listeners.
     var dropZone = document.getElementsByTagName('body')[0];
     dropZone.addEventListener('dragover', WEB.handleDragOver, false);
     dropZone.addEventListener('drop'    , function(e){WEB.handleDropReader(e,createWorldFromJSONStream)}, false);
+    setupGUI();
 
     try {
         try {
@@ -568,6 +577,9 @@ function init() {
             }else{
                 document.getElementById("mode-selection").innerHTML = "<h3 style='color: #ff0000;'><b>Load a json file using the load button. </b></h3>";
             }
+            // Show main menu, hide options
+            gui.closed = true;
+            MainMenu.open();
         };
     }
     catch (e) {
@@ -576,4 +588,4 @@ function init() {
     }
 }
 
-export { init };
+export { init, setupGUI };

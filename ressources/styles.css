@@ -1,6 +1,7 @@
 html, body {
     margin: 0px;  /* Make sure that there is no margin around the canvas */
     overflow: hidden;  /* Make sure we don't get scroll bars. */
+    font: 11px 'Lucida Grande', sans-serif;
 }
 canvas {
     display: block; /* The default display, inline, would add small margin below the canvas */
@@ -15,12 +16,28 @@ legend {
 }
 fieldset {
   padding: 0px;
-  padding-left: 0px;
-  margin-bottom: 3px;
+  padding-left: 110px;
+  padding-right:160px;
+  margin-bottom: 1px;
   display: block;
   border: 0px;
+}
+
+.radio{
+  word-wrap: normal;
+  padding:0px;
+  margin-right: 5px;
+  min-width:60px;
+  display:inline-block;
+  vertical-align: middle;
+}
+input[type="radio"]{
+  background-color: #00ff00;
+  margin-top:0px;
+  vertical-align: middle;
 }
 .slider{
   vertical-align: middle;
 }
+
 

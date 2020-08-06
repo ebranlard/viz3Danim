@@ -20,7 +20,6 @@ function getQueryVariable(variable)
 // --------------------------------------------------------------------------------{
 // Great success!
 function handleDropReader(evt, callback) {
-    console.log('>>>>>>>>>>>>> DROP')
     evt.stopPropagation();
     evt.preventDefault();
     var files = evt.dataTransfer.files;
@@ -43,7 +42,6 @@ function handleDropReader(evt, callback) {
 }
 
 function handleDragOver(evt) {
-    console.log('>>>>>>>>>>>>> DRAG OVER')
     evt.stopPropagation();
     evt.preventDefault();
     evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
