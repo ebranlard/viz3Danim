@@ -56,12 +56,12 @@ The python script and web-app are located in this repository (i.e. [here](https:
 ## Notes
 
 ### Current limitations:
--     Only for mode shape vizualization for now
--     "json" format undocumented, and generated from SubDyn summary files only. 
+- Only for mode shape vizualization for now
+- "json" format undocumented, and generated from SubDyn summary files only. 
 
 ### Some notes:
--	The perspective and views of the GUI are not always well centered (you can "pan" with right click).
--	The Guyan modes have a default frequency of 1, the CB modes usually have a high frequency, so you need to use the frequency scaling  slider to slow them down (or holding the w and s keys). 
--	The diameter is estimated based on the area, so it’s not the actual diameter for now. 
+- The perspective and views of the GUI are not always well centered (you can "pan" with right click).
+- The Guyan modes have a default frequency of 1, the CB modes usually have a high frequency, so you need to use the frequency scaling  slider to slow them down (or holding the w and s keys). 
+- The diameter is estimated based on the area, so it’s not the actual diameter for now. 
 
 
