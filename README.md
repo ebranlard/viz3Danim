@@ -1,7 +1,12 @@
 # viz3Danim
 
 Visualize 3D animations in a web gui.
-Input files are `json` files with an undocumented format for now, which may evolve.
+Input files are `json` files with an undocumented format for now, which may evolve. Example files are located in the `examples` folder. 
+
+A live and active version of te web gui is available [here](https://ebranlard.github.io/viz3Danim/)
+
+The live version opening an example file can be accessed [here](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket.sum.json).
+
 
 ## SubDyn modes visualization
 
