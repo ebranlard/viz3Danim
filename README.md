@@ -1,11 +1,11 @@
 # viz3Danim
 
-Visualize 3D animations in a web gui.
+Visualize 3D animations in a web GUI.
 Input files are `json` files with an undocumented format for now, which may evolve. Example files are located in the `examples` folder. 
 
-A live and active version of te web gui is available [here](https://ebranlard.github.io/viz3Danim/)
+A live and active version of the web GUI is available [here](https://ebranlard.github.io/viz3Danim/)
 
-The live version opening an example file can be accessed [here](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket.sum.json).
+An example of this same live version with a loaded example file is available [here](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket.sum.json).
 
 
 ## Basic help
@@ -53,9 +53,15 @@ The python script and web-app are located in this repository (i.e. [here](https:
       # then open a browser and navigate to https://localhost:8000/
 ```
 
+## Notes
+
+### Current limitations:
+-     Only for mode shape vizualization for now
+-     "json" format undocumented, and generated from SubDyn summary files only. 
 
 ### Some notes:
--	I'm aware that converting to json is a bit annoying..
 -	The perspective and views of the GUI are not always well centered (you can "pan" with right click).
 -	The Guyan modes have a default frequency of 1, the CB modes usually have a high frequency, so you need to use the frequency scaling  slider to slow them down (or holding the w and s keys). 
 -	The diameter is estimated based on the area, so it’s not the actual diameter for now. 
+
+
