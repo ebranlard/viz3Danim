@@ -1,4 +1,4 @@
-# anim3Dviz
+# viz3Danim
 
 Visualize 3D animations in a web gui.
 Input files are `json` files with an undocumented format for now, which may evolve.
