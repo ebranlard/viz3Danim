@@ -17,7 +17,8 @@ var windowWidth, windowHeight;
 var params = {
     orthographicCamera: false, // Use parallel projection
     animating: true, // animating
-    dt: 0.03, // time step
+    dt:  0.5, // time step
+    dt0: 0.5, // time step
     time: 0, //  time
     amplitude: 1.0, // amplitude
     animID: "Loop",
@@ -506,7 +507,7 @@ function enableGUI() {
     // Default options
     //animating = true; // Animates or not
     params.time =0 ;         
-    setDtFromJS(0.03) ;        // Time step
+    setDtFromJS(0.5) ;        // Time step
     setAmplitudeFromJS(1.0) ;  // Amplitude of modes
     showHide(params.showBox   ,   box);
     showHide(params.showAxes ,    axes);
@@ -562,12 +563,12 @@ function setupGUI(){
     folder.open();
 
     var folder = gui.addFolder('Mode shape animation');
-    folder.add(params,  'dt'       , 0.0001, 0.5).name( 'Freq. (w/s)').listen()
+    folder.add(params,  'dt'       , 0.0001, 1.0).name( 'Freq. (w/s)').listen()
     folder.add(params,  'amplitude', 0.0001, 10 ).name( 'Ampl. (a/d)').listen().onChange(
 
         function(v){if(!params.animating){plotSceneAtTime();}}
     );
-    folder.add(params, 'animID', [ 'Loop', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
+    folder.add(params, 'animID', [ 'Loop', 'Jumps', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
     //     folder.add(settings, 'speed', { Low: 0, Med: 0.5, High: 1 } );
     folder.open( );
 
@@ -580,28 +581,32 @@ function setupGUI(){
 
 /** */
 function plotSceneAtTime() { 
-   //dt = 0.03;
-   //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
-   for (var iElem = 0; iElem < nElem; iElem++) {
-      var i1 = Connectivity[iElem][0]
-      var i2 = Connectivity[iElem][1]
-      var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time)
-      // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
-      var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
-      var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
-      var arr = PLT.segmentOrient(P1,P2);
-      Elems[iElem].setRotationFromMatrix(arr[0])
-      Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
-   }
-   controls.update();
-   render();
+    if ( params.animID=='Jumps' ) {
+       var fact = Math.round((params.time/3/params.dt*(params.dt/params.dt0)  % 1))*2 -1
+       fact = params.amplitude * fact;
+    } else{
+       var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time);
+    }
+    //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
+    for (var iElem = 0; iElem < nElem; iElem++) {
+       var i1 = Connectivity[iElem][0]
+       var i2 = Connectivity[iElem][1]
+       // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
+       var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
+       var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
+       var arr = PLT.segmentOrient(P1,P2);
+       Elems[iElem].setRotationFromMatrix(arr[0])
+       Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+    }
+    controls.update();
+    render();
 
 }
 
 //--------------------------- animation support -----------------------------------
 function doFrame() {
     if (params.animating) {
-        params.time=params.time+params.dt;
+        params.time=params.time+params.dt/10;
         plotSceneAtTime();
         requestAnimationFrame(doFrame); 
     }
@@ -622,8 +627,12 @@ function pauseAnimation() {
 function animationSwitch() {
     if ( params.animID=='Loop' ) {
     	startAnimation();
-    }
-    else {
+    } else if ( params.animID=='Jumps' ) {
+        params.time=0;
+        params.dt=0.5
+        params.dt0=0.5
+    	startAnimation();
+    } else {
     	pauseAnimation();
         if ( params.animID=='Max' ) {
            params.time = Math.PI/(2*Modes[iMode].omega);
