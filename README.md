@@ -8,6 +8,11 @@ A live and active version of te web gui is available [here](https://ebranlard.gi
 The live version opening an example file can be accessed [here](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket.sum.json).
 
 
+## Basic help
+
+Look at "Menu -> Help", in particular for some keyboard shortcuts to scale the modes. 
+
+
 ## SubDyn modes visualization
 
 This describes how to visualize the Guyan and CB modes in the SubDyn summary file.
