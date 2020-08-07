@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import os
+from io import open
 # Local 
 # import weio
 
@@ -198,8 +199,9 @@ def subDyn2Json(subDynSumFile):
 
     jsonFile=os.path.splitext(subDynSumFile)[0]+'.json'
     print('>>> Writing json file: ',jsonFile)
-    with open(jsonFile, 'w') as f:
-        json.dump(d, f) #, indent=2)
+    with open(jsonFile, 'w', encoding='utf-8') as f:
+        f.write(unicode(json.dumps(d, ensure_ascii=False))) #, indent=2)
+        # json.dump(d, f, indent=2) 
 
 
 # --------------------------------------------------------------------------------}
