@@ -178,7 +178,7 @@ function createWorldFromJSONStream(Jstream) {
         /* Create and add a wireframe cube to the scene, to show the edges of the cube. */
         var edgeGeometry = new THREE.EdgesGeometry(box_geo);  // contains edges of cube without diagonal edges
         box = new THREE.LineSegments(edgeGeometry, new THREE.LineBasicMaterial({color:0xffffff}));
-        box.position.set(extent.centerX,extent.centerY, extent.centerZ)
+        box.position.set(extent.centerX, extent.centerY, extent.centerZ)
         scene.add(box);
  
         /* Add planes*/
@@ -592,8 +592,13 @@ function plotSceneAtTime() {
        var i1 = Connectivity[iElem][0]
        var i2 = Connectivity[iElem][1]
        // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
-       var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
-       var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
+       // TODO TODO TODO RIGID LINKS!!!
+       if ((i1<Modes[iMode].Displ.length) && (i2<Modes[iMode].Displ.length)) {
+           var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
+           var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
+       } else {
+           console.log('PROBLEM, LIKELY RIGID LINK, TODO!')
+       }
        var arr = PLT.segmentOrient(P1,P2);
        Elems[iElem].setRotationFromMatrix(arr[0])
        Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
@@ -636,7 +641,7 @@ function animationSwitch() {
     	pauseAnimation();
         if ( params.animID=='Max' ) {
            params.time = Math.PI/(2*Modes[iMode].omega);
-        }else{
+        }else{ // None
            params.time=0;
         }
         plotSceneAtTime();
