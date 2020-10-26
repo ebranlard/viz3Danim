@@ -138,6 +138,24 @@ class Canvas3D(glcanvas.GLCanvas):
         # To be implemented by subclass if no manager
         pass
 
+    # ------------------------------------
+    def onPlay(self):
+        self.animate=True
+        if haveManager:
+            self.manager.onPlay()
+        self.Refresh()
+
+    def onPause(self):
+        self.animate=False
+        if haveManager:
+            self.manager.onPause()
+
+    def onStop(self):
+        self.animate=False
+        if haveManager:
+            self.manager.onStop()
+
+    # ------------------------------------
     def OnSize(self, event):
         #print('OnSize')
         if self.init:

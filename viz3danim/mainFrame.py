@@ -13,6 +13,29 @@ PROG_NAME='viz3Danim'
 PROG_VERSION='v0.01-local'
 
 
+# Implement File Drop Target class
+class FileDropTarget(wx.FileDropTarget):
+   def __init__(self, parent):
+      wx.FileDropTarget.__init__(self)
+      self.parent = parent
+
+   def OnDropFiles(self, x, y, filenames):
+      print(filenames)
+      self.parent.load(filenames[0],add=False)
+#       filenames = [f for f in filenames if not os.path.isdir(f)]
+#       filenames.sort()
+#       if len(filenames)>0:
+#           # If Ctrl is pressed we add
+#           bAdd= wx.GetKeyState(wx.WXK_CONTROL);
+#           iFormat=self.parent.comboFormats.GetSelection()
+#           if iFormat==0: # auto-format
+#               Format = None
+#           else:
+#               Format = FILE_FORMATS[iFormat-1]
+#           self.parent.load_files(filenames,fileformat=Format,bAdd=bAdd)
+      return True
+
+
 #===================================================================================================
 class ToolPanel(wx.Panel):
     def __init__(self, parent, canvas, *args, **kwargs):
@@ -21,28 +44,25 @@ class ToolPanel(wx.Panel):
         self.canvas = canvas
 
         self.btOpen  = wx.Button(self, label="Open")
-        self.btAnim  = wx.Button(self, label="Animate")
-        self.btStop  = wx.Button(self, label="Stop")
         self.button1 = wx.Button(self, label="Create")
         self.button2 = wx.Button(self, label="Destroy")
         self.button3 = wx.Button(self, label="Update")
         self.cbLabel = wx.CheckBox(self, label="Show Labels")
-        self.Bind(wx.EVT_CHECKBOX, self.Check1)
+        self.cbModes = wx.ComboBox(self, -1, choices=['Mode 1','Mode 2','Mode 3'], style=wx.CB_READONLY)
+
 
         self.btOpen.Bind(wx.EVT_BUTTON, self.onOpen)
         self.button1.Bind(wx.EVT_BUTTON, self.mainframe.createCanvas)
         self.button2.Bind(wx.EVT_BUTTON, self.mainframe.destroyCanvas)
         self.button3.Bind(wx.EVT_BUTTON, self.mainframe.updateCanvas)
-        self.btAnim.Bind(wx.EVT_BUTTON, self.onAnim)
-        self.btStop.Bind(wx.EVT_BUTTON, self.onStop)
 
+        # --- Layout
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.btOpen , flag=wx.BOTTOM, border=5)
-        self.sizer.Add(self.btAnim , flag=wx.BOTTOM, border=5)
-        self.sizer.Add(self.btStop , flag=wx.BOTTOM, border=5)
         self.sizer.Add(self.button1, flag=wx.BOTTOM, border=5)
         self.sizer.Add(self.button3, flag=wx.BOTTOM, border=5)
         self.sizer.Add(self.button2, flag=wx.BOTTOM, border=5)
+        self.sizer.Add(self.cbModes, flag=wx.BOTTOM, border=5)
         self.sizer.Add(self.cbLabel)
 
         self.border = wx.BoxSizer()
@@ -50,108 +70,122 @@ class ToolPanel(wx.Panel):
 
         self.SetSizerAndFit(self.border)
 
+        self.Bind(wx.EVT_CHECKBOX, self.Check1)
+        self.cbModes.Bind(wx.EVT_COMBOBOX, self.onModeChange)
+
         self.onOpen()
 
     #-----------------------------------------------------------------------------------------------
     def Check1(self, e):
-        self.canvas.Axes(self.check1.Value)
-        self.canvas.OnDraw()
+        print('check')
+
+    def onModeChange(self, event=None):
+        i=self.cbModes.GetSelection()
+        self.mainframe.manager._freq = i*5
+        self.mainframe.manager._B = i
+        print(i)
+
 
     def onOpen(self, event=None):
-        print('>>> Load')
-        import weio
-        from welib.fast.subdyn import subdyn_to_graph
         filename='MT100_SD.dat'
         filename='MT100_SD.dat'
         filename='TetraSpar_SubDyn_v3.dat'
-        sd = weio.FASTInputFile(filename)
-        Graph=subdyn_to_graph(sd)
+        filename='examples/Monopile.SD.sum.yaml'
+        self.load(filename)
 
-        NodeRad=1.1
-        NOrigins = []
-        NLabels  = []
-        NRadii   = []
-        for n in Graph.Nodes:
-            origin=[n.x,n.y,n.z]
-            NOrigins.append(origin)
-            NLabels.append(str(n.ID))
-            NRadii.append(NodeRad)
-            vts, fs, ns, cs = SphereGeometry((origin), NodeRad, color=(1,1,0))
-            self.mainframe.manager.add_surf('Node'+str(n.ID), vts, fs, ns, cs)
-
-        ElemRad=1
-        EOrigins = []
-        ELabels  = []
-        ERadii   = []
-        for e in Graph.Elements:
-            n1=e.nodes[0]
-            n2=e.nodes[1]
-            P1=np.array([n1.x,n1.y,n1.z])
-            P2=np.array([n2.x,n2.y,n2.z])
-            origin=(P1+P2)/2
-            EOrigins.append(origin)
-            ELabels.append(str(e.ID))
-            ERadii.append(ElemRad*1.1)
-            vts, fs, ns, cs, tmat = CylinderGeometryTwoPoints(P1, P2, R1=ElemRad, R2=3, color=(1,0,0))
-            self.mainframe.manager.add_surf('Elem'+str(e.ID), vts, fs, ns, cs, tmat=tmat)
-
-        # --- Labels
-#         vtss, fss, pps, h, color = TextGeometry(NLabels, NOrigins, NRadii, NodeRad*1.5, (0,1,1))
-#         self.mainframe.manager.add_mark('LabNodes', vtss, fss, pps, h, color)
-#         vtss, fss, pps, h, color = TextGeometry(ELabels, EOrigins, ERadii, ElemRad*1.5, (0,1,1))
-#         self.mainframe.manager.add_mark('LabElems', vtss, fss, pps, h, color)
-
-
-#         vts, fs, ns, cs, tmat = CylinderGeometryTwoPoints(P1, P2, R1=3, R2=3, color=(1,0,0))
-#         self.manager.add_surf('cyl2', vts, fs, ns, cs, tmat=tmat)
-#         print(NLabels)
-#         print(Graph)
-#         print(ELabels)
-
-    def onAnim(self, event):
-        print('>>> anim')
-        self.mainframe.manager.canvas.animate=True
-        self.mainframe.manager.canvas.Refresh()
-
-    def onStop(self, event):
-        print('>>> stop')
-        #self.mainframe.animate=False
-        self.mainframe.manager.canvas.animate=False
-
+    def load(self, filename, add=False):
+        self.mainframe.load(filename=filename,add=add)
 
 #===================================================================================================
 class MainFrame(wx.Frame):
     def __init__(self, *args, **kwargs):
         #wx.Frame.__init__(self, title='OpenGL', *args, **kwargs)
         from .GLWrapper import Manager 
+        from .GLWrapperObjects import ObjectsManager 
         from .GUIPanel3D import Panel3D
 
         style = wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE
         #super(GLFrame, self).__init__(parent, id, title, pos, size, style, name)
         wx.Frame.__init__(self, parent=None, id=-1, title=PROG_NAME+' '+PROG_VERSION, style=style)
 
-        self.manager=Manager()
+        self.manager=ObjectsManager()
         self.manager.addMiscObjects()
-        self.manager.setAnimationCallBack(self.animCallBack, self)
-
-        self.t=0
+        #self.manager.setAnimationCallBack(self.animCallBack, self)
 
         self.canvas=None
-        self.panel = ToolPanel(self, canvas=self.canvas)
         self.panel3D = Panel3D(self, self.manager, hasAnimation=False) 
+        self.panel = ToolPanel(self, canvas=self.canvas)
 
+
+        # --- Layout
         self.sizer = wx.BoxSizer()
-        #self.sizer.Add(self.canvas, 1, wx.EXPAND)
-
         self.sizer.Add(self.panel  , 0, wx.EXPAND)
         self.sizer.Add(self.panel3D, 1, wx.EXPAND)
         self.SetSizerAndFit(self.sizer)
+
+        # --- Drop
+        self.SetDropTarget(FileDropTarget(self))
+
+
+        # --- Events
+        #self.Bind(wx.EVT_SIZE, self.OnResizeWindow)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+        # --- Shortcuts
+        idFreqIncr=wx.NewId()
+        idFreqDecr=wx.NewId()
+        idAmplIncr=wx.NewId()
+        idAmplDecr=wx.NewId()
+        self.Bind(wx.EVT_MENU, self.onFreqIncr, id=idFreqIncr)
+        self.Bind(wx.EVT_MENU, self.onFreqDecr, id=idFreqDecr)
+        self.Bind(wx.EVT_MENU, self.onAmplIncr, id=idAmplIncr)
+        self.Bind(wx.EVT_MENU, self.onAmplDecr, id=idAmplDecr)
+        accel_tbl = wx.AcceleratorTable([
+            (wx.ACCEL_NORMAL,  ord('w'), idFreqIncr ),
+            (wx.ACCEL_NORMAL,  ord('s'), idFreqDecr ),
+            (wx.ACCEL_NORMAL,  ord('a'), idAmplIncr ),
+            (wx.ACCEL_NORMAL,  ord('d'), idAmplDecr )
+            ]
+            )
+        self.SetAcceleratorTable(accel_tbl)
+
 
         self.SetSize((500, 500))
         self.Center()
         self.Show()
 
-        self.Bind(wx.EVT_CLOSE, self.onClose)
+    def load(self, filename, add=False):
+        print('>>> Load',add)
+        if add is False:
+            self.manager.clearObjects()
+        import weio
+        #Graph = weio.FASTInputFile(filename).toGraph()
+        Graph = weio.FASTSummaryFile(filename).toGraph()
+        self.manager.addGraph(Graph)
+        self.manager.loadObjects()
+        self.panel3D.updateObjList()
+
+        if len(Graph.Modes)>0 or len(Graph.Motions)>0:
+            self.panel3D.toggleAnimation(True)
+        else:
+            self.panel3D.toggleAnimation(False)
+
+    def onFreqIncr(self, event=None):
+        print('fi')
+        self.manager._freq=self.manager._freq+0.1
+
+    def onFreqDecr(self, event=None):
+        print('fd')
+        self.manager._freq=abs(self.manager._freq-0.1)
+
+    def onAmplIncr(self, event=None):
+        print('ai')
+        self.manager._A+=0.1
+
+    def onAmplDecr(self, event=None):
+        print('ad')
+        self.manager._A-=0.1
+
 
     def onClose(self,event=None):
         print('Destroy')

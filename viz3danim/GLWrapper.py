@@ -4,7 +4,7 @@ import moderngl
 
 from pyrr import Matrix44, matrix44, Vector3
 try:
-    from welib.tools.clean_exceptionormals import *
+    from welib.tools.clean_exceptions import *
 except:
     pass
 
@@ -109,7 +109,6 @@ class Surface(GLObject):
 
     def draw(self, mvp, light, bright, scatter):
 
-
         if not self.visible: return
         self.ctx.line_width = self.width
         mvp = np.dot(*mvp)
@@ -166,7 +165,6 @@ class MarkText(GLObject):
 
 class Manager(object):
     def __init__(self,canvas=None):
-        self.h, self.v, self.r = 1.5, 0, 300
         self.ratio    = 1.0
         self.background = 0.0, 0.0, 0.0  # default background color
         self.objs = {}
@@ -181,6 +179,7 @@ class Manager(object):
         self.scatter = 0.899
         # --- Geometry
         self.diagonal = 1.0
+        self.maxDim = 1.0
         self.center    = (0,0,0)
         # --- Camera
         self.pers      = True
@@ -190,7 +189,6 @@ class Manager(object):
         self.callback=None
 
         self._OBJS = ['BBox','axes']
-
 
     def InitGL(self):
         self.on_ctx()
@@ -301,11 +299,24 @@ class Manager(object):
         """ Return "user" objects, not including internal objects such as axes or bounding box """
         return [obj for n,obj in self.objs.items() if (n not in self._OBJS)]
 
+    def animate(self):
+        pass
+
+    def onPlay(self):
+        pass
+
+    def onPause(self):
+        pass
+
+    def onStop(self):
+        pass
+
     def draw(self):
-        if self.callback is not None:
-            self.callback(self.getObjs())
-            for obj in self.objs.values():
-                if isinstance(obj, Surface):  obj.Update()
+        self.animate()
+        #if self.callback is not None:
+        #    self.callback(self.getObjs())
+        for obj in self.objs.values():
+            if isinstance(obj, Surface):  obj.Update()
 
         #print('>>> draw')
         self.ctx.clear(*self.background)
@@ -326,6 +337,7 @@ class Manager(object):
             self.box = np.vstack(([-1,-1,-1],[1,1,1]))
         self.center = self.box.mean(axis=0)
         self.diagonal = np.linalg.norm(self.box[1]-self.box[0])
+        self.maxDim = np.max(self.box[1]-self.box[0])
         if self.diagonal==0:
             self.diagonal = 1.0
         #print('Diagonal',self.diagonal, 'Center',self.center)
@@ -438,12 +450,14 @@ class Manager(object):
         """ show a bounding box around the objects of the scene"""
         if show:
             self.computeBoundingBox()
-            P1= self.box[0]
-            P2= self.box[1]
-            DP=P2-P1 
-            P1-=DP/2  # adding a margin, bigger than bounding box
-            P2+=DP/2
+            #P1= self.box[0]
+            #P2= self.box[1]
+            #DP=P2-P1 
+            #P1-=DP/2  # adding a margin, bigger than bounding box
+            #P2+=DP/2
             #print(P1,P2)
+            P1=np.array(self.center)-self.maxDim/2*1.5
+            P2=np.array(self.center)+self.maxDim/2*1.5
             vts, fs, ns, cs = CubeGeometry(P1, P2, color=(1,1,1))
             self.add_surf('BBox', vts, fs, ns, cs, width=1, mode='wireframe')
         else:

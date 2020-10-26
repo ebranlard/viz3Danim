@@ -104,12 +104,15 @@ class Panel3D(wx.Panel):
 
         # --- Top Time toolbar
         self.tbTopTime = tb = wx.ToolBar(self, style=wx.TB_HORIZONTAL|wx.TB_HORZ_LAYOUT|wx.TB_FLAT)
-        self.btPlay  = TBAddBt(tb,"Play" , None, callback = lambda e : self.onPlay )
-        self.btPause = TBAddBt(tb,"Pause", None, callback = lambda e : self.onPause)
-        self.btStop  = TBAddBt(tb,"Stop" , None, callback = lambda e : self.onStop )
-        self.cbLoop  = wx.CheckBox(tb, -1, 'Loop',(10,10))
+        self.btPlay  = TBAddBt(tb,"Play" , None, callback = self.onPlay )
+        self.btPause = TBAddBt(tb,"Pause", None, callback = self.onPause)
+        self.btStop  = TBAddBt(tb,"Stop" , None, callback = self.onStop )
+        self.btLoop  = TBAddBt(tb,"Loop" , None, callback = self.onLoop )
+        self._loop=True
+        #self.cbLoop  = wx.CheckBox(tb, -1, 'Loop',(10,10))
         self.lbTime  = wx.StaticText(tb, -1, '      ' )
-        tb.AddControl(self.cbLoop )
+        #self.cbLoop.SetValue(True)
+        #tb.AddControl(self.cbLoop )
         tb.AddControl(self.lbTime )
         tb.AddSeparator()
         tb.Realize() 
@@ -169,6 +172,7 @@ class Panel3D(wx.Panel):
         self.cbObjs    .Bind(wx.EVT_COMBOBOX, self.onSelectObj)
         self.slBlend   .Bind(wx.EVT_SCROLL  , self.onBlend)
         self.cbMode    .Bind(wx.EVT_COMBOBOX, self.onMode)
+        #self.cbLoop    .Bind(wx.EVT_COMBOBOX, lambda e: self.mngr.loop(self.cbLoop.Value))
         self.colPickObj.Bind(wx.EVT_COLOURPICKER_CHANGED, self.onColor)
 
 
@@ -206,11 +210,26 @@ class Panel3D(wx.Panel):
 
     def toggleAnimation(self, anim=False):
         self.hasAnimation=anim
+        print('>>>>',anim)
         if anim:
             self.tbTopTime.Show()
         else:
             self.tbTopTime.Hide()
         self.hsizer.Layout()
+
+    # --- Animation
+    def onPlay(self, event=None):
+        self.canvas.onPlay()
+
+    def onPause(self, event=None):
+        self.canvas.onPause()
+
+    def onStop(self, event=None):
+        self.canvas.onStop()
+
+    def onLoop(self, event=None):
+        self._loop=not self._loop
+        self.mngr.loop(self._loop)
 
     # --- Events
     def onSave(self, evt):
