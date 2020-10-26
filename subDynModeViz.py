@@ -160,11 +160,11 @@ def subDyn2Json(subDynSumFile):
 
     # CB modes
     Phi_CB = np.vstack((np.zeros((len(DOF_B),PhiM.shape[1])),PhiM, np.zeros((len(DOF_F),PhiM.shape[1]))))
-    dispCB, posCB, INodes = NodesDisp(DOF_K, Phi_CB, maxDisp=maxDisp)
+    dispCB, posCB, INodes = NodesDisp(DOF_K, Phi_CB, maxDisp=maxDisp) # IMPORTANT no SortDim
 
     # Guyan modes
     Phi_Guyan = np.vstack((np.eye(len(DOF_B)),PhiR, np.zeros((len(DOF_F),PhiR.shape[1]))))
-    dispGy, posGy, INodesGy = NodesDisp(DOF_K, Phi_Guyan, maxDisp=maxDisp)
+    dispGy, posGy, INodesGy = NodesDisp(DOF_K, Phi_Guyan, maxDisp=maxDisp)# IMPORTANT no SortDim
 
     d=dict();
     d['Connectivity']=Elements[:,[1,2]].astype(int).tolist();
@@ -175,7 +175,7 @@ def subDyn2Json(subDynSumFile):
     d['Modes']=[
             {
                 'name':'GY{:d}'.format(iMode+1),
-                'omega':1,
+                'omega':1.0,
                 'Displ':dispGy[:,:,iMode].tolist()
             }  for iMode in range(dispGy.shape[2]) ]
     d['Modes']+=[
@@ -201,9 +201,11 @@ def subDyn2Json(subDynSumFile):
     print('>>> Writing json file: ',jsonFile)
     with open(jsonFile, 'w', encoding='utf-8') as f:
         try:
-            f.write(unicode(json.dumps(d, ensure_ascii=False))) #, indent=2)
+            #f.write(unicode(json.dumps(d, ensure_ascii=False))) #, indent=2)
+            f.write(json.dumps(d, ensure_ascii=False)) #, indent=2)
         except:
-            json.dump(d, f, indent=2) 
+            print('>>> FAILED')
+            json.dump(d, f, indent=0) 
 
 
 # --------------------------------------------------------------------------------}
@@ -378,7 +380,6 @@ class Server(object):
 # --------------------------------------------------------------------------------}
 # ---Main  
 # --------------------------------------------------------------------------------{
-
 def abort_with_usage():
     print(""" 
 usage: python subDynModeViz [--open] SUBDYN_sum.yaml
