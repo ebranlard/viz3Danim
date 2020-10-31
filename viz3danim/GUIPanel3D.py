@@ -161,6 +161,7 @@ class Panel3D(wx.Panel):
         tb.AddControl(self.cbMode)
         tb.Realize()
         self._objControls=[self.cbVisible, self.colPickObj, self.slBlend, self.cbMode]
+        self._objNotPlay=[self.colPick, self.colPickObj]
 
         # --- Callbacks
         # self.button1.Bind(wx.EVT_BUTTON, self.mainframe.createCanvas)
@@ -174,6 +175,7 @@ class Panel3D(wx.Panel):
         self.cbMode    .Bind(wx.EVT_COMBOBOX, self.onMode)
         #self.cbLoop    .Bind(wx.EVT_COMBOBOX, lambda e: self.mngr.loop(self.cbLoop.Value))
         self.colPickObj.Bind(wx.EVT_COLOURPICKER_CHANGED, self.onColor)
+
 
 
         # --- Layout
@@ -217,19 +219,40 @@ class Panel3D(wx.Panel):
             self.tbTopTime.Hide()
         self.hsizer.Layout()
 
+    def togglePlayPause(self, playOn=False):
+        for ctrl in self._objNotPlay:
+            ctrl.Enable(not playOn)
+        pass
+
+
     # --- Animation
     def onPlay(self, event=None):
+        for ctrl in self._objNotPlay:
+            ctrl.Enable(False)
         self.canvas.onPlay()
+        #if event is not None:
+        #    event.Skip()
 
     def onPause(self, event=None):
         self.canvas.onPause()
 
+        for ctrl in self._objNotPlay:
+            ctrl.Enable(True)
+
+        #event.Skip()
+
     def onStop(self, event=None):
         self.canvas.onStop()
+
+        for ctrl in self._objNotPlay:
+            ctrl.Enable(True)
+
+        #event.Skip()
 
     def onLoop(self, event=None):
         self._loop=not self._loop
         self.mngr.loop(self._loop)
+        #event.Skip()
 
     # --- Events
     def onSave(self, evt):
@@ -243,10 +266,12 @@ class Panel3D(wx.Panel):
     def onCamReset(self, event):
         self.cbParaView.SetValue(False) # TODO
         self.mngr.camReset()
+        event.Skip()
 
     def onBgColor(self, event):
         c = tuple(np.array(event.GetColour()[:3])/255)
         self.mngr.setBackground(c)
+        event.Skip()
 
     # --- Object edit
     def updateObjList(self):
@@ -276,6 +301,7 @@ class Panel3D(wx.Panel):
         if self._curObj:
             self._curObj.set_style(visible=event.IsChecked())
             self.canvas.Refresh(False)
+        #event.Skip()
 
     def onBlend(self, event):
         blend=event.GetInt()/20.0
@@ -283,6 +309,7 @@ class Panel3D(wx.Panel):
         if self._curObj:
             self._curObj.set_style(blend=blend)
             self.canvas.Refresh(False)
+        event.Skip()
 
     def onMode(self, event):
         mode = self.cbMode.Value.lower()
@@ -290,6 +317,7 @@ class Panel3D(wx.Panel):
         if self._curObj:
             self._curObj.set_style(mode=mode)
             self.canvas.Refresh(False)
+        event.Skip()
 
     def onColor(self, event):
         c = tuple(np.array(event.GetColour()[:3])/255)

@@ -121,16 +121,15 @@ class Canvas3D(glcanvas.GLCanvas):
             self.setBackgroundColor()
             self.init = True
         self.OnDraw()
-        #event.Skip()
+        #event.Skip() # < Skipping is a bad idea
 
     def OnDraw(self):
         if haveManager:
             self.manager.onDraw(self.Size.width, self.Size.height)
+            if self.manager._animate:
+                self.Refresh()
         else:
             self._OnDraw()
-
-        if self.animate:
-            self.Refresh()
 
         self.SwapBuffers()
 
@@ -140,20 +139,23 @@ class Canvas3D(glcanvas.GLCanvas):
 
     # ------------------------------------
     def onPlay(self):
-        self.animate=True
         if haveManager:
             self.manager.onPlay()
+        else:
+            self.animate=True
         self.Refresh()
 
     def onPause(self):
-        self.animate=False
         if haveManager:
             self.manager.onPause()
+        else:
+            self.animate=False
 
     def onStop(self):
-        self.animate=False
         if haveManager:
             self.manager.onStop()
+        else:
+            self.animate=False
 
     # ------------------------------------
     def OnSize(self, event):

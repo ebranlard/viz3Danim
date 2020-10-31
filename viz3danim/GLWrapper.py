@@ -268,8 +268,7 @@ class Manager(object):
         #print('Update')
         for obj in self.objs.values():
             if isinstance(obj, Surface):  obj.Update()
-        self.draw()
-        self.canvas.SwapBuffers()
+        self.redraw()
 
     def add_surf(self, name, vertices, ids, normals=None, colors=(0,0,1), **kwargs):
         surf = Surface(vertices, ids, normals, colors, **kwargs)
@@ -325,6 +324,10 @@ class Manager(object):
         self.ctx.enable(moderngl.BLEND)
         for obj in self.objs.values(): 
             obj.draw(self.mvp, self.light, self.bright, self.scatter)
+
+    def redraw(self):
+        self.draw()
+        self.canvas.SwapBuffers()
 
 
     def computeBoundingBox(self):

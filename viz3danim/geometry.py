@@ -32,7 +32,7 @@ def rotation_matrix_from_vectors(vec1, vec2):
 
 def matrix44_map_vec_to_2points(P1, P2, up):
     """ 
-    Returnormals matrix 44 (M) such that M.dot(up)=P2-P1
+    Return matrix 44 (M) such that M.dot(up)=P2-P1
     """
     DP= np.asarray(P2)[:3]-np.asarray(P1)[:3]
     mat = rotation_matrix_from_vectors(up, DP)
@@ -43,8 +43,8 @@ def matrix44_map_vec_to_2points(P1, P2, up):
 
 def matrix44_2points(P1, P2, up=(0,0,1), origin=(0,0,0)):
     """
-    Returnormals matrix 44 (M) such that :
-      - a point located at origin is tranormalslated to (P1+P2)/2
+    Return matrix 44 (M) such that :
+      - a point located at origin is translated to (P1+P2)/2
       - a vector up, is oriented to P2-P1
     """
     M = matrix44_map_vec_to_2points(P1, P2, up)
@@ -204,7 +204,7 @@ def CylinderGeometryTwoPoints(P1, P2, R1=1, R2=1, color=(1,0,0), nz=2, yRes=12, 
     # Create a cylinder oriented around z and at origin 0,0,0
     vertices, faces, normals, colors = CylinderGeometry(R1=R1, R2=R2, height=L, color=color, nz=nz, yRes=yRes)
 #     print(vertices)
-    # Get the tranormalsformation matrice from thes vertices to the points
+    # Get the transformation matrix from thes vertices to the points
     tmat= matrix44_2points(P1, P2, up=(0,0,1), origin=(0,0,0))
     #print(tmat)
 #     tmat=Matrix44.identity()
