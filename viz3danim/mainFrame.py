@@ -8,6 +8,7 @@ from pyrr import Matrix44, matrix44, Vector3
 import numpy as np
 
 from .geometry import *
+from .GUIlib import Warn, Error, MyExceptionHook, MyWxApp
 
 PROG_NAME='viz3Danim'
 PROG_VERSION='v0.01-local'
@@ -35,6 +36,45 @@ class FileDropTarget(wx.FileDropTarget):
 #           self.parent.load_files(filenames,fileformat=Format,bAdd=bAdd)
       return True
 
+# class View3DPanel(wx.Panel):
+#     def __init__(self, parent, *args, **kwargs):
+#         wx.Panel.__init__(self, parent, *args, **kwargs)
+#         self.mainframe=parent
+#         self.canvas = canvas
+# 
+#         self.btOpen  = wx.Button(self, label="Open")
+#         self.button1 = wx.Button(self, label="Create")
+#         self.button2 = wx.Button(self, label="Destroy")
+#         self.button3 = wx.Button(self, label="Update")
+#         self.cbLabel = wx.CheckBox(self, label="Show Labels")
+#         self.cbModes = wx.ComboBox(self, -1, choices=['Mode 1','Mode 2','Mode 3'], style=wx.CB_READONLY)
+# 
+# 
+#         self.btOpen.Bind(wx.EVT_BUTTON, self.onOpen)
+#         self.button1.Bind(wx.EVT_BUTTON, self.mainframe.createCanvas)
+#         self.button2.Bind(wx.EVT_BUTTON, self.mainframe.destroyCanvas)
+#         self.button3.Bind(wx.EVT_BUTTON, self.mainframe.updateCanvas)
+# 
+#         # --- Layout
+#         self.sizer = wx.BoxSizer(wx.VERTICAL)
+#         self.sizer.Add(self.btOpen , flag=wx.BOTTOM, border=5)
+#         self.sizer.Add(self.button1, flag=wx.BOTTOM, border=5)
+#         self.sizer.Add(self.button3, flag=wx.BOTTOM, border=5)
+#         self.sizer.Add(self.button2, flag=wx.BOTTOM, border=5)
+#         self.sizer.Add(self.cbModes, flag=wx.BOTTOM, border=5)
+#         self.sizer.Add(self.cbLabel)
+# 
+#         self.border = wx.BoxSizer()
+#         self.border.Add(self.sizer, flag=wx.ALL | wx.EXPAND, border=5)
+# 
+#         self.SetSizerAndFit(self.border)
+# 
+#         self.Bind(wx.EVT_CHECKBOX, self.Check1)
+#         self.cbModes.Bind(wx.EVT_COMBOBOX, self.onModeChange)
+# 
+#         self.onOpen()
+# 
+# 
 
 #===================================================================================================
 class ToolPanel(wx.Panel):
@@ -87,14 +127,17 @@ class ToolPanel(wx.Panel):
 
 
     def onOpen(self, event=None):
-        filename='MT100_SD.dat'
-        filename='MT100_SD.dat'
-        filename='TetraSpar_SubDyn_v3.dat'
-        filename='examples/Monopile.SD.sum.yaml'
+        filename='examples/MT100_SD.dat'
+        filename='examples/TetraSpar_SubDyn_v3.dat'
+        #filename='examples/Monopile.SD.sum.yaml'
+        #filename='examples/MT100_HD.dat'
         self.load(filename)
 
     def load(self, filename, add=False):
         self.mainframe.load(filename=filename,add=add)
+
+    def setModes(self, modes):
+        pass
 
 #===================================================================================================
 class MainFrame(wx.Frame):
@@ -103,6 +146,8 @@ class MainFrame(wx.Frame):
         from .GLWrapper import Manager 
         from .GLWrapperObjects import ObjectsManager 
         from .GUIPanel3D import Panel3D
+
+        sys.excepthook = MyExceptionHook
 
         style = wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE
         #super(GLFrame, self).__init__(parent, id, title, pos, size, style, name)
@@ -158,9 +203,18 @@ class MainFrame(wx.Frame):
         print('>>> Load',add)
         if add is False:
             self.manager.clearObjects()
-        import weio
+        import weio.weio as weio
+        from weio import WrongFormatError, FormatNotDetectedError
         #Graph = weio.FASTInputFile(filename).toGraph()
-        Graph = weio.FASTSummaryFile(filename).toGraph()
+        try:
+            f = weio.read(filename)
+        except WrongFormatError as e:
+            raise e 
+        try:
+            Graph=f.toGraph()
+        except:
+            raise  
+
         self.manager.addGraph(Graph)
         self.manager.loadObjects()
         self.panel3D.updateObjList()
@@ -169,6 +223,7 @@ class MainFrame(wx.Frame):
             self.panel3D.toggleAnimation(True)
         else:
             self.panel3D.toggleAnimation(False)
+
 
     def onFreqIncr(self, event=None):
         print('fi')
@@ -244,32 +299,9 @@ class MainFrame(wx.Frame):
 #         obj.tmat= rot_y.dot(obj.tmat)
 # 
 
-
-
 # --------------------------------------------------------------------------------}
 # --- Wrapped WxApp
 # --------------------------------------------------------------------------------{
-class MyWxApp(wx.App):
-    def __init__(self, redirect=False, filename=None):
-        try:
-            wx.App.__init__(self, redirect, filename)
-        except:
-            if wx.Platform == '__WXMAC__':
-                #msg = """This program needs access to the screen.
-                #          Please run with 'pythonw', not 'python', and only when you are logged
-                #          in on the main display of your Mac."""
-               msg= """
-               MacOs Error
-               """
-            elif wx.Platform == '__WXGTK__':
-                msg ="""
-Error:
-  Unable to access the X Display, is $DISPLAY set properly?
-"""
-            else:
-                msg = 'Unable to create GUI' # TODO: more description is needed for wxMSW...
-            raise SystemExit(msg)
-
 def showApp():
     """
     The main function to start the data frame GUI.

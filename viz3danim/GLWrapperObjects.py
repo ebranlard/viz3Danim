@@ -26,12 +26,12 @@ class ObjectsManager(Manager):
         self._B=0
 
     def clearObjects(self):
-        print('Removing objects')
         for n in self.getObjNames():
             self.objs.pop(n, None)
-        print(self.objs)
+        self.Objects=[]
         if self.canvas:
             self.canvas.Refresh(False)
+
 
 
     def addGraph(self, Graph):
@@ -49,20 +49,19 @@ class ObjectsManager(Manager):
 
     def graphToScene(self,Graph):
 
+        _DEFAULT={'object':'cylinder','D':1,'color':(0.5,0.3,0.3)}
 
-        type2Color=[
-                (0,0,0), #0
-                (0.753,0.561,0.05), # 1 Beam
-                (0.541,0.753,0.05), # 2 Cable
-                (0.753,0.05,0.204), # 3 Rigid
-                (0.918,0.702,0.125), # 3 Rigid
-                ]
+        print('Graph', Graph)
 
-        NodeRad=1.1
         NOrigins = []
         NLabels  = []
         NRadii   = []
         for n in Graph.Nodes:
+            try:
+                NodeRad=e.data['D']/2*1.1
+            except:
+                NodeRad=_DEFAULT['D']/2*1.1
+
             origin=[n.x,n.y,n.z]
             NOrigins.append(origin)
             NLabels.append(str(n.ID))
@@ -81,20 +80,28 @@ class ObjectsManager(Manager):
             origin=(P1+P2)/2
             EOrigins.append(origin)
             ELabels.append(str(e.ID))
-            try:
-                Diam=e.data['D']
-            except:
-                Diam=1
-            try:
-                Type=e.data['Type']
-            except:
-                Type=0
-            color=type2Color[Type]
-            R1=Diam/2
 
-            ERadii.append(R1*1.1)
-            vts, fs, ns, cs, tmat = CylinderGeometryTwoPoints(P1, P2, R1=R1, R2=3, color=color)
-            self.add_surf('Elem'+str(e.ID), vts, fs, ns, cs, tmat=tmat)
+            try: 
+                objCol=e.data['color']
+            except:
+                objCol=_DEFAULT['color']
+
+            try: 
+                objType=e.data['object']
+            except:
+                objType=_DEFAULT['object']
+
+            if objType=='cylinder':
+                try:
+                    Diam=e.data['D']
+                except:
+                    Diam=_DEFAULT['D']
+                R1=Diam/2
+                ERadii.append(R1*1.1)
+                vts, fs, ns, cs, tmat = CylinderGeometryTwoPoints(P1, P2, R1=R1, R2=3, color=objCol)
+                self.add_surf('Elem'+str(e.ID), vts, fs, ns, cs, tmat=tmat)
+            else:
+                raise Exception('Object type not implemented')
 
         # --- Labels
 #         vtss, fss, pps, h, color = TextGeometry(NLabels, NOrigins, NRadii, NodeRad*1.5, (0,1,1))
