@@ -17,9 +17,14 @@ The python app can open SubDyn and HydroDyn inputs files (.dat), and SubDyn yaml
 
 ##Installation:
 ```bash
-git clone http://github.com/ebranlard/viz3danim
+git clone --recurse-submodules http://github.com/ebranlard/viz3danim
 cd viz3danim
 python -m pip install -r requirements.txt
+```
+
+If you forgot the `recurse-submodules` flag, and you end up with errors that `weio` is missing, type the following:
+```bash
+git submodule update --init --recursive
 ```
 
 ##Running:

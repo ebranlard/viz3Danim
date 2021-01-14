@@ -1,6 +1,7 @@
 numpy>=1.15.2
 matplotlib 
 pandas
+chardet
 future
 moderngl
 glcontext
