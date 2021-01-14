@@ -1,7 +1,9 @@
 numpy>=1.15.2
-matplotlib 
-pandas
-future
 moderngl
 glcontext
 pyrr
+matplotlib 
+xlrd
+pandas
+future
+chardet
