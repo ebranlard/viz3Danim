@@ -24,8 +24,8 @@ class ObjectsManager(Manager):
         self.dt0=0.05 # TODO use a time manager
         self._animate=False
         self._loop=True
-        self._freq=0.1
-        self._A=2
+        self._freq=0.4
+        self._A=1
         self._B=0
         # ---
         self.animType='None'

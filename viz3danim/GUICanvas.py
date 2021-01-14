@@ -1,7 +1,9 @@
 import wx
+import wx.lib.delayedresult as delayedresult
 import os
 import moderngl
-import math
+from threading import Thread
+import time
 try:
     from welib.tools.clean_exceptions import *
 except:
@@ -49,6 +51,20 @@ print('haveModernGL: ',haveModernGL)
 print('haveGLCanvas: ',haveGLCanvas)
 print('haveManager:  ',haveManager)
 
+class RefreshThread(Thread):
+    def __init__(self, parent, canvas):
+        Thread.__init__(self)
+        self.parent=parent
+        self.canvas=canvas
+        self.start()    # start the thread
+    def run(self):
+        print('Thread running... ')
+        while self.canvas.manager._animate:
+            time.sleep(0.05) # <<<<<<<<<<<< This line needed
+            self.canvas.Refresh()
+        wx.CallAfter(self.done)
+    def done(self):
+        print('Tread done ')
 
 #----------------------------------------------------------------------
 class Canvas3D(glcanvas.GLCanvas):
@@ -126,6 +142,7 @@ class Canvas3D(glcanvas.GLCanvas):
     def OnDraw(self):
         if haveManager:
             self.manager.onDraw(self.Size.width, self.Size.height)
+            # >>> NOTE: comment for thread
             if self.manager._animate:
                 self.Refresh()
         else:
@@ -143,6 +160,16 @@ class Canvas3D(glcanvas.GLCanvas):
             self.manager.onPlay()
         else:
             self.animate=True
+
+        # >>> TODO Thread options
+        # --- Option 1: thread
+        #RefreshThread(self, self)
+        # --- Option 2: delayed result
+        #delayedresult.startWorker(self.canvas.onAnimDelayedEnd, self.canvas.onAnimDelayedStart, jobID=1)
+        # --- Option 3: refreshloop
+        #self.canvas.refreshAfter=True
+        #self.canvas.Refresh() # set the canvas into an "infinite" refresh loop
+        #delayedresult.startWorker(self.onAnimThreadEnd, self.onAnimStart, jobID=1)
         self.Refresh()
 
     def onPause(self):
@@ -156,6 +183,28 @@ class Canvas3D(glcanvas.GLCanvas):
             self.manager.onStop()
         else:
             self.animate=False
+
+    def onAnimThreadEnd(self, thread):
+        """ Consumer """
+        jobID = thread.getJobID()
+
+        result = thread.get()
+        print('Result from jobID',jobID)
+
+    def onAnimStart(self):
+        print('Starting ')
+        self.manager._animate=True
+        while self.manager._animate:
+            self.Refresh()
+
+#    def onAnimAbort(self, thread):
+#        jobID = thread.getJobID()
+#        print('Aborting jobID',jobID)
+#        self.animAbortEvent.set()
+#
+    #def onDoAnim(self, jobID, abort):
+
+
 
     # ------------------------------------
     def OnSize(self, event):

@@ -1,6 +1,45 @@
 # viz3Danim
 
-Visualize 3D animations in a web GUI.
+Visualize 3D animations and structures (for OpenFAST for now).
+
+Two different applications are provided: a python app (.dat, .yaml), or a web browser app (.json files).
+
+A live and active version of the web GUI is available [here](https://ebranlard.github.io/viz3Danim/)
+
+
+See documentation below for the Python app and Web App.
+
+
+
+# Python App
+
+The python app can open SubDyn and HydroDyn inputs files (.dat), and SubDyn yaml files (.yaml) to display the modes.
+
+##Installation:
+```bash
+git clone http://github.com/ebranlard/viz3danim
+cd viz3danim
+python -m pip install -r requirements.txt
+```
+
+##Running:
+```bash
+python viz3danim.py
+```
+
+Drag and drop files.
+
+## Keyboard shortcuts
+
+a: increase amplitude
+d: decrease amplitude
+w: speed up 
+s: slow down 
+
+
+
+
+# Web App
 Input files are `json` files with an undocumented format for now, which may evolve. Example files are located in the `examples` folder. 
 
 A live and active version of the web GUI is available [here](https://ebranlard.github.io/viz3Danim/)

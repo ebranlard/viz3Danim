@@ -11,9 +11,9 @@ except:
     pass
 
 try:
-    from .GUICanvas import Canvas3D 
+    from .GUICanvas import Canvas3D , RefreshThread
 except ImportError:
-    from GUICanvas import Canvas3D 
+    from GUICanvas import Canvas3D , RefreshThread
 
 
 # --------------------------------------------------------------------------------}
@@ -230,6 +230,10 @@ class Panel3D(wx.Panel):
         for ctrl in self._objNotPlay:
             ctrl.Enable(False)
         self.canvas.onPlay()
+
+        # >>> NOTE: uncomment for thread
+        #self.mngr._animate=True
+        #RefreshThread(self, self.canvas)
         #if event is not None:
         #    event.Skip()
 

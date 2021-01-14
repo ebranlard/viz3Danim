@@ -72,7 +72,7 @@ class Viewer3DPanel(wx.Panel):
         self.SetAcceleratorTable(accel_tbl)
 
         # Testing Hack
-        self.demo()
+        #self.demo()
 
     def demo(self):
         #filename='examples/MT100_SD.dat'
