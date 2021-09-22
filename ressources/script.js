@@ -585,7 +585,8 @@ function plotSceneAtTime() {
        var fact = Math.round((params.time/3/params.dt*(params.dt/params.dt0)  % 1))*2 -1
        fact = params.amplitude * fact;
     } else{
-       var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time);
+       //var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time);
+       var fact = params.amplitude * Math.sin(1.0 * params.time);
     }
     //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
     for (var iElem = 0; iElem < nElem; iElem++) {
@@ -640,7 +641,8 @@ function animationSwitch() {
     } else {
     	pauseAnimation();
         if ( params.animID=='Max' ) {
-           params.time = Math.PI/(2*Modes[iMode].omega);
+           //params.time = Math.PI/(2*Modes[iMode].omega);
+           params.time = Math.PI/(2*1.0);
         }else{ // None
            params.time=0;
         }
@@ -676,7 +678,8 @@ function modeSelect(){
     iMode = parseInt(document.querySelector('input[name="mode"]:checked').id);
     if (!params.animating) {
         if ( params.animID=='Max' ) {
-            params.time = Math.PI/(2*Modes[iMode].omega);
+            //params.time = Math.PI/(2*Modes[iMode].omega);
+            params.time = Math.PI/(2*1.0)
         }else{
             params.time=0;
         }
