@@ -18,6 +18,9 @@ class ObjectsManager(Manager):
         self.Objects=[]
         self._Elem=[]
 
+        self.ELabels=[]
+        self.NLabels=[]
+
         self.t=0 # TODO use a time manager
         self.tMax=100 # TODO use a time manager
         self.dt=0.05 # TODO use a time manager
@@ -55,35 +58,35 @@ class ObjectsManager(Manager):
         Graph.NodesP       = Graph.points
         self.Objects.append(Graph)
 
-    def loadObjects(self):
-        self.objectsToScene()
+    def loadObjects(self, labels=True):
+        self.objectsToScene(labels=labels)
 
-    def objectsToScene(self):
+    def objectsToScene(self, labels=True):
         for o in self.Objects:
             if hasattr(o, 'Elements'):
-                self.graphToScene(o)
+                self.graphToScene(o, labels=labels)
             else:
                 raise Exception('Unknown object type')
 
-    def graphToScene(self,Graph):
+    def graphToScene(self,Graph, labels=True):
 
         _DEFAULT={'object':'cylinder','D':1,'color':(0.5,0.3,0.3)}
 
 
         # --- Nodes
-        #NOrigins = []
-        #NLabels  = []
-        #NRadii   = []
-        #for n in Graph.Nodes:
-        #    try:
-        #        NodeRad=e.data['D']/2*1.1
-        #    except:
-        #        NodeRad=_DEFAULT['D']/2*1.1
+        NOrigins = []
+        NLabels  = []
+        NRadii   = []
+        for n in Graph.Nodes:
+            try:
+                NodeRad=e.data['D']/2*1.1
+            except:
+                NodeRad=_DEFAULT['D']/2*1.1
 
-        #    origin=[n.x,n.y,n.z]
-        #    NOrigins.append(origin)
-        #    NLabels.append(str(n.ID))
-        #    NRadii.append(NodeRad)
+            origin=[n.x,n.y,n.z]
+            NOrigins.append(origin)
+            NLabels.append(str(n.ID))
+            NRadii.append(NodeRad)
         #    vts, fs, ns, cs = SphereGeometry((origin), NodeRad, color=(1,1,0))
         #    self.add_surf('Node'+str(n.ID), vts, fs, ns, cs)
 
@@ -124,10 +127,22 @@ class ObjectsManager(Manager):
             else:
                 raise Exception('Object type not implemented')
         # --- Labels
-#         vtss, fss, pps, h, color = TextGeometry(NLabels, NOrigins, NRadii, NodeRad*1.5, (0,1,1))
-#         self.add_mark('LabNodes', vtss, fss, pps, h, color)
-#         vtss, fss, pps, h, color = TextGeometry(ELabels, EOrigins, ERadii, ElemRad*1.5, (0,1,1))
-#         self.add_mark('LabElems', vtss, fss, pps, h, color)
+        NodeRad=np.mean(NRadii)
+        ElemRad=np.mean(ERadii)
+        NRadii=np.asarray(NRadii)*1.2
+        ERadii=np.asarray(ERadii)*1.2
+        #print('ERadii',ERadii)
+        #print('NRadii',NRadii)
+        #print('NodeRad',NodeRad)
+        #print('ElemRad',ElemRad)
+        vtss, fss, pps, h, color = TextGeometry(NLabels, NOrigins, NRadii, NodeRad*3.0, (0,0,1))
+        self.NLabels=[vtss, fss, pps, h, color]
+        vtss, fss, pps, h, color = TextGeometry(ELabels, EOrigins, ERadii, ElemRad*3.0, (1,0,0))
+        self.ELabels=[vtss, fss, pps, h, color]
+
+        #self.add_mark('LabNodes', self.NLabels[0], self.NLabels[1], self.NLabels[2], self.NLabels[3], self.NLabels[4])
+        #self.add_mark('LabElems', self.ELabels[0], self.ELabels[1], self.ELabels[2], self.ELabels[3], self.ELabels[4])
+
 #         vts, fs, ns, cs, tmat = CylinderGeometryTwoPoints(P1, P2, R1=3, R2=3, color=(1,0,0))
 #         self.manager.add_surf('cyl2', vts, fs, ns, cs, tmat=tmat)
 

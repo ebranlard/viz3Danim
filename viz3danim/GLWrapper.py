@@ -195,6 +195,7 @@ class Manager(object):
         self.reset()
         self.showBox()
         self.showAxes()
+        #self.showLbl()
 
     def onDraw(self, width, height):
         self.set_viewport(0, 0, width, height)
@@ -478,6 +479,17 @@ class Manager(object):
             #self.reset()
         else:
             self.objs.pop('axes', None)
+
+        self.Refresh()
+
+    def showLbl(self, show=True):
+        """ Show Labels """
+        if show:
+            self.add_mark('LabNodes', self.NLabels[0], self.NLabels[1], self.NLabels[2], self.NLabels[3], self.NLabels[4])
+            self.add_mark('LabElems', self.ELabels[0], self.ELabels[1], self.ELabels[2], self.ELabels[3], self.ELabels[4])
+        else:
+            self.objs.pop('LabNodes', None)
+            self.objs.pop('LabElems', None)
 
         self.Refresh()
 

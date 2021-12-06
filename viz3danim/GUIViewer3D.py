@@ -26,7 +26,7 @@ class FileDropTarget(wx.FileDropTarget):
       return True
 
 class Viewer3DPanel(wx.Panel):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, filenames, *args, **kwargs):
         from .GLWrapperObjects import ObjectsManager 
         from .GUIPanel3D import Panel3D
 
@@ -72,6 +72,11 @@ class Viewer3DPanel(wx.Panel):
         self.SetAcceleratorTable(accel_tbl)
 
         # Testing Hack
+        if filenames is not None:
+            if not type(filenames) is list:
+                filenames=[filenames]
+            #filenames=['examples/Monopile.SD.sum.yaml']
+            self.load_files(filenames,add=False)
         #self.demo()
 
     def demo(self):
@@ -162,7 +167,6 @@ class ObjectPanel(wx.Panel):
         self.btRestart = wx.Button(self, label = "Restart engine")
         #self.btCanvas =wx.ToggleButton(self,wx.ID_ANY, '', style=wx.BU_EXACTFIT)
         #self.button3 = wx.Button(self, label="Update")
-        #self.cbLabel = wx.CheckBox(self, label="Show Labels")
 
 
         self.btOpen.Bind(wx.EVT_BUTTON, self.onOpen)

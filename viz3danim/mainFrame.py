@@ -11,13 +11,13 @@ PROG_VERSION='v0.01-local'
 
 #===================================================================================================
 class MainFrame(wx.Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, filenames=None, **kwargs):
         sys.excepthook = MyExceptionHook
 
         style = wx.DEFAULT_FRAME_STYLE #| wx.NO_FULL_REPAINT_ON_RESIZE
         wx.Frame.__init__(self, parent=None, id=-1, title=PROG_NAME+' '+PROG_VERSION, style=style)
 
-        self.Viewer3D = Viewer3DPanel(self)
+        self.Viewer3D = Viewer3DPanel(self, filenames, **kwargs)
 
         self.sizer = wx.BoxSizer()
         self.sizer.Add(self.Viewer3D , 1, wx.EXPAND)
@@ -39,12 +39,12 @@ class MainFrame(wx.Frame):
 # --------------------------------------------------------------------------------}
 # --- Wrapped WxApp
 # --------------------------------------------------------------------------------{
-def showApp():
+def showApp(filenames=None, **kwargs):
     """
     The main function to start the data frame GUI.
     """
     app = MyWxApp(False)
-    frame = MainFrame()
+    frame = MainFrame(filenames=filenames, **kwargs)
     app.MainLoop()
 
 
