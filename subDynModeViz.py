@@ -293,7 +293,7 @@ class Server(object):
     >>> server.run_server()
 
     """
-    def __init__(self, scene_file, directory="static/", port=8000):
+    def __init__(self, scene_file=None, directory="static/", port=1337):
         self.scene_file = scene_file
         self.port = port
         self.directory = directory
@@ -311,17 +311,26 @@ class Server(object):
             self.port += 1
 
         handler_class = SimpleHTTPRequestHandler
-        server_class = StoppableHTTPServer
+        #protocol = "HTTP/1.0"
+        #handler_class.protocol_version = protocol
+        handler_class.extensions_map.update({
+              ".js": "application/javascript",
+        });
 
-        protocol = "HTTP/1.0"
         server_address = ('127.0.0.1', self.port)
-        handler_class.protocol_version = protocol
-        self.httpd = server_class(server_address, handler_class)
+
+        #import http.server
+        #import socketserver
+        #self.httpd = socketserver.TCPServer(("", self.port), handler_class)
+        self.httpd = StoppableHTTPServer(server_address, handler_class)
+
         sa = self.httpd.socket.getsockname()
         print("Serving HTTP on", sa[0], "port", sa[1], "...")
-        print("To view visualization, open:\n")
-        url = ("http://localhost:" + str(sa[1]) + "/index.html?load=" +
-               self.scene_file)
+        #print("To view visualization, open:\n")
+        if self.scene_file is not None:
+            url = ("http://localhost:" + str(sa[1]) + "/index.html?load=" + self.scene_file)
+        else:
+            url = ("http://localhost:" + str(sa[1]) + "/index.html")
         print(url)
         if not headless:
             webbrowser.open(url)
@@ -330,6 +339,8 @@ class Server(object):
         self._register_sigint_handler()
         self._thread = threading.Thread(target=self.httpd.serve)
         self._thread.start()
+
+        #self.httpd.serve_forever()
 
     def _windows_ctrl_handle(self, event):
         if event == win32con.CTRL_C_EVENT:
@@ -397,7 +408,30 @@ options:
     sys.exit(-1)
 
 if __name__ == '__main__':
-    if len(sys.argv) not in [2,3] :
+    # Basedir: path where the "index.html" of viz3danim can be found
+    basedir=None
+    #basedir='C:/Path/To/viz3danim'
+    if basedir is None:
+        basedir=os.path.dirname(__file__)
+
+
+    if len(sys.argv) ==2 and sys.argv[1]=='--open':
+        print('Opening server')
+        server = Server(directory=basedir)
+        server.run_server()
+
+        #Use to create local host
+        #import http.server
+        #import socketserver
+        #PORT = 1337
+        #Handler = http.server.SimpleHTTPRequestHandler
+        #Handler.extensions_map.update({
+        #      ".js": "application/javascript",
+        #});
+        #httpd = socketserver.TCPServer(("", PORT), Handler)
+        #httpd.serve_forever()
+
+    elif len(sys.argv) not in [2,3] :
         abort_with_usage()
     elif len(sys.argv) == 3 and sys.argv[1]!='--open' :
         abort_with_usage()
@@ -405,7 +439,6 @@ if __name__ == '__main__':
         subDyn2Json(sys.argv[2])
         # open server and launch it in browser
         filename = os.path.abspath(sys.argv[2])
-        basedir=os.path.dirname(filename)
         scene_json_file = os.path.splitext(filename)[0]+'.json'
         scene_json_file = os.path.relpath(scene_json_file, basedir);
         server = Server(scene_file=scene_json_file, directory=basedir)

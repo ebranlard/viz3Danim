@@ -33,9 +33,9 @@ installer:
 
 # --- Rules for web app
 sd2viz:
-	python subDynModeViz.py --open examples/TetraSpar.SD.sum.yaml
+	python subDynModeViz.py --open examples/OC4_Jacket.sum.yaml
 # 	python subDynModeViz.py --open examples/Main_Monopile-SoilDyn-Simple.SD.sum.yaml
-# 	python subDynModeViz.py --open examples/Main_OC4_Jacket_Decay.SD.sum.yaml
+# 	python subDynModeViz.py --open examples/TetraSpar.SD.sum.yaml
 # 	python subDynModeViz.py --open examples/Main_Spar.SD.sum.yaml
 # 	python subDynModeViz.py --open examples/Pendulum.SD.sum.yaml
 

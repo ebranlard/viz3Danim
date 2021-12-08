@@ -1,3 +1,8 @@
+// NOTES:
+// -  Press Ctrl+Shift+J in Chrome to debug
+// - console.log('text:', object)  to print
+
+
 import * as THREE from            './three.module.js';
 import { TrackballControls } from './TrackballControlsModule.js';
 import { GUI }               from './dat.gui.module.js';
@@ -10,6 +15,7 @@ var perspectiveCamera, orthographicCamera;
 var canvas;   // The canvas on which the renderer will draw.
 var controls; // an object of type TrackballControls, the handles rotation using the mouse.
 var gui, guiTop, MainMenu; // Menu
+var menuAnim; // Menu
 var frustumSize
 var windowWidth, windowHeight;
 
@@ -40,6 +46,8 @@ var nElem,  Elems, Props ;  // Elements and ElementProperties
 var nNodes, Nodes ;  // Nodes
 var Connectivity  ;  // Connectivity mapping
 var iMode, Modes, Displ;  // Modes data
+var iTS, TimeSeries;      // Time series data
+var iPlot=0;      // Switch between kind of plots iPlot=1: Modes, iPlot=2: TimeSeries
 var groundLevel;
 
 var vsplit=0.3
@@ -95,7 +103,7 @@ function createBasicWorld() {
 
 /** Create main World objects from a parsed Jason input **/
 function createWorldFromJSONStream(Jstream) {
-       //console.log('AJ',AJ)
+    console.log('Creating World From JSON');
     try{
         var AJ = JSON.parse(Jstream);
         console.log(AJ);
@@ -120,6 +128,9 @@ function createWorldFromJSONStream(Jstream) {
         Nodes        = AJ.Nodes       ;
         Modes        = AJ.Modes       ;
         Props        = AJ.ElemProps   ;
+        TimeSeries   = AJ.TimeSeries  ;
+        if (TimeSeries == null) { TimeSeries = []};
+        if (Modes == null) { Modes = []};
         Connectivity = AJ.Connectivity;
         groundLevel  = AJ.groundLevel;
         nNodes = Nodes.length;
@@ -156,21 +167,51 @@ function createWorldFromJSONStream(Jstream) {
            Elems[iElem]= arr[0]; // Store cylinder
         }
  
+
+        // --- Creating HTML to select modes
         var pp= document.getElementById('mode-selection');
         var labels='';
-        for (var i = 0; i < Modes.length; i++) {
-            labels+='<label class="radio"><input type="radio" name="mode" id="'+i+'"'
-            if (i==0){
-                iMode =i // We select the first mode
-                labels+=' checked="checked"';
+        if (Modes.length==0) {
+            labels='&nbsp;&nbsp;&nbsp;&nbsp;No modes in file.'
+        } else {
+            for (var i = 0; i < Modes.length; i++) {
+                labels+='<label class="radio"><input type="radio" name="mode" id="'+i+'"'
+                if (i==0){
+                    iMode =i // We select the first mode
+                    labels+=' checked="checked"';
+                }
+                labels+='/>'+Modes[i].name+'</label>';
             }
-            labels+='/>'+Modes[i].name+'</label>';
         }
         pp.innerHTML=labels
         pp.children;
         for (var i = 0; i < pp.children.length; i++) {
             pp.children[i].onclick = modeSelect;
         }
+
+        // --- Creating HTML to select time series
+        var pp= document.getElementById('time-series-selection');
+        var labels='';
+        if (TimeSeries.length==0) {
+            labels='&nbsp;&nbsp;&nbsp;&nbsp;No time series in file.'
+        } else {
+            labels='TODO: time series in file.'
+        }
+        pp.innerHTML=labels
+
+        // --- Setting params based on content of JSON
+        if (Modes.length == 0) {
+            params.animating=false;
+            params.animID="None";
+            //menuAnim.show();
+            iPlot = 0; // No plotting
+        } else {
+            params.animating=true;
+            params.animID="Loop";
+            iPlot = 1; // Plotting Modes
+        }
+
+
         // --- Estimate scene extent
         extent = PLT.getExtent(scene);
         /* */
@@ -505,7 +546,7 @@ function enableGUI() {
     onWindowResize();
 
     // Default options
-    //animating = true; // Animates or not
+    //params.animating = true; // Animates or not
     params.time =0 ;         
     setDtFromJS(0.5) ;        // Time step
     setAmplitudeFromJS(1.0) ;  // Amplitude of modes
@@ -562,15 +603,14 @@ function setupGUI(){
     folder.add(params, 'showThreeViews').name('2D views').onChange(toggleThreeViews).listen();
     folder.open();
 
-    var folder = gui.addFolder('Mode shape animation');
-    folder.add(params,  'dt'       , 0.0001, 1.0).name( 'Freq. (w/s)').listen()
-    folder.add(params,  'amplitude', 0.0001, 10 ).name( 'Ampl. (a/d)').listen().onChange(
-
+    menuAnim = gui.addFolder('Mode shape animation');
+    menuAnim.add(params,  'dt'       , 0.0001, 1.0).name( 'Freq. (w/s)').listen()
+    menuAnim.add(params,  'amplitude', 0.0001, 10 ).name( 'Ampl. (a/d)').listen().onChange(
         function(v){if(!params.animating){plotSceneAtTime();}}
     );
-    folder.add(params, 'animID', [ 'Loop', 'Jumps', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
+    menuAnim.add(params, 'animID', [ 'Loop', 'Jumps', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
     //     folder.add(settings, 'speed', { Low: 0, Med: 0.5, High: 1 } );
-    folder.open( );
+    menuAnim.open( );
 
     document.getElementById('guiTopRight').appendChild(gui.domElement);
 
@@ -588,21 +628,41 @@ function plotSceneAtTime() {
        //var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time);
        var fact = params.amplitude * Math.sin(1.0 * params.time);
     }
-    //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
-    for (var iElem = 0; iElem < nElem; iElem++) {
-       var i1 = Connectivity[iElem][0]
-       var i2 = Connectivity[iElem][1]
-       // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
-       // TODO TODO TODO RIGID LINKS!!!
-       if ((i1<Modes[iMode].Displ.length) && (i2<Modes[iMode].Displ.length)) {
-           var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
-           var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
-       } else {
-           console.log('PROBLEM, LIKELY RIGID LINK, TODO!')
-       }
-       var arr = PLT.segmentOrient(P1,P2);
-       Elems[iElem].setRotationFromMatrix(arr[0])
-       Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+
+    //console.log('Modes: '     , Modes);
+    //console.log('TimeSeries: ', TimeSeries);
+    //if(hasOwnProperty('field'))
+    //{
+    //    // Do something
+    //}
+
+    if (iPlot==0) {
+        // --- Do nothing, plot fixed scene only
+        console.log('iPlot: ', iPlot);
+
+    } else if (iPlot==1) {
+        //--- Plotting Modes based on Displacement field
+        //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
+        for (var iElem = 0; iElem < nElem; iElem++) {
+           var i1 = Connectivity[iElem][0]
+           var i2 = Connectivity[iElem][1]
+           // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
+           // TODO TODO TODO RIGID LINKS!!!
+
+           if ((i1<Modes[iMode].Displ.length) && (i2<Modes[iMode].Displ.length)) {
+               var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
+               var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
+           } else {
+               console.log('PROBLEM, LIKELY RIGID LINK, TODO!')
+           }
+           var arr = PLT.segmentOrient(P1,P2);
+           Elems[iElem].setRotationFromMatrix(arr[0])
+           Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+        }
+    } else if (iPlot==2) {
+        // ---- Plot time series
+        console.log('TODO plot time series');
+        console.log('iPlot: ', iPlot);
     }
     controls.update();
     render();
@@ -675,6 +735,7 @@ function showHide(v, elem) {
     render();
 }
 function modeSelect(){
+    iPlot = 1; // Plotting Modes
     iMode = parseInt(document.querySelector('input[name="mode"]:checked').id);
     if (!params.animating) {
         if ( params.animID=='Max' ) {
