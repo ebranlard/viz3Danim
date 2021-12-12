@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <head>
-<meta charset="UTF-8">
-<title>Mode shape visualization</title>
-<link rel="stylesheet" href="ressources/styles.css">
+    <meta charset="UTF-8">
+    <title>Mode shape visualization</title>
+    <!--CSS -->
+    <link type="text/css" rel="stylesheet" href="ressources/styles.css">
+    <link type="text/css" rel="stylesheet" href="ressources/animationControls.css">
+    <!-- External Javascripts -->
+    <script type="text/javascript" src="ressources//jquery.min.js"></script>
+    <script type="text/javascript" src="ressources/bootstrap-slider.js"></script>
+    <script type="text/javascript" src="ressources/prototype.js"></script>
 <style>
-  body{
+body{
   background-color: black;
-  }
+}
 #guiTopRight {
     position: absolute;
     top: 0px;
@@ -27,6 +33,14 @@
     bottom: 20px;
     left: 0px;
 }
+/*#guiTopRight .dg .cr.boolean { border-left:4px solid red; } */
+
+#guiTopRow{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
 #guiTopRow > div{min-height: 25px; height: 25px; width: 100%; } 
 #guiTopRow > div > ul  {position: absolute; z-index: 0;}
 #guiTopRow > div > ul { display: table-row;  }
@@ -55,11 +69,40 @@ VIZ.init();
 <div id="topRow">
 <input id="file-input" type="file" name="name" style="display: none;" />
 <fieldset>
-    <legend>Modes </legend>
+    <legend id="modes" class="selectors">Modes </legend>
     <div id="mode-selection"></div>
-    <legend>Time series </legend>
+    <legend class="selectors">Time series </legend>
     <div id="time-series-selection"></div>
+    <div id="animctrl" style="display: flex; flex-flow:row nowrap;">
+      <div id="controlButtonWrapper">
+            <button id="playAnimation" disabled style="display:inline-block;"  class="btn btn-success" >
+              <span class="glyphicon glyphicon-play"></span>Play
+            </button>
+            <button id="pauseAnimation" disabled style="display:inline-block;" class="btn btn-info">
+              <span class="glyphicon glyphicon-pause" ></span>
+              Pause
+            </button>
+            <button id="stopAnimation" disabled style="display:inline-block;" class="btn btn-danger">
+              <span class="glyphicon glyphicon-stop" ></span>
+              Stop
+            </button>
+            <div id="checkboxWrapper">
+                <label id="checkboxPlayLooped"><input type="checkbox" id="playLooped" style="vertical-align:middle;">Loop</label>
+            </div>
+      </div>
+      <div id="sliderWrapper" style="display:flex;flex-flow:row nowrap; width:50%">
+            <div id="time-slider" class="slider" style="float:right;padding-left: 2em;"></div>
+            <div id="timeValue">
+                <span class="glyphicon glyphicon-time" ></span>
+                <span style="margin-right:1em;" id="time"> -.--- s</span>
+            </div>
+      </div>
+    </div>
+
 </fieldset>
+
+
+
 <div id="info-holder"></div>
 </div>
 <div id="canvas-holder">
@@ -70,4 +113,12 @@ VIZ.init();
 <div id="guiBottomRight"></div>
 <div id='guiBottomLeft'></div>
 </body>
+
+
+<script type="module">
+import  * as VIZ from  './ressources/script.js';
+VIZ.initAnimControl();
+</script>
+
+
 </html>

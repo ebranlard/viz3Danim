@@ -2,6 +2,7 @@ html, body {
     margin: 0px;  /* Make sure that there is no margin around the canvas */
     overflow: hidden;  /* Make sure we don't get scroll bars. */
     font: 11px 'Lucida Grande', sans-serif;
+    color: #eee;
 }
 canvas {
     display: block; /* The default display, inline, would add small margin below the canvas */
@@ -16,12 +17,13 @@ legend {
 }
 fieldset {
   padding: 0px;
-  padding-left: 110px;
-  padding-right:160px;
+  padding-left: 0px;
+  padding-right:0px;
   margin-bottom: 1px;
   display: block;
   border: 0px;
 }
+
 
 .radio{
   word-wrap: normal;
@@ -40,4 +42,101 @@ input[type="radio"]{
   vertical-align: middle;
 }
 
+/**/
+#topRow{
+    padding-left: 112px;
+    padding-right:160px;
+    display:block;
+}
+
+.selectors {
+    background-attachment:scroll;
+    background-clip: border-box;
+    background-color: #1a1a1a;
+    background-origin: padding-box;
+    background-position-x: 0%;
+    background-position-y: 0%;
+    background-size: auto ;
+    /*border-bottom-color: #2c2c2c; 
+    border-bottom-style:solid ;
+    border-bottom-width:3px ; */
+    border-top-color: #e61d5f;
+    border-top-style:solid ;
+    border-top-width:3px ;
+    display:list-item ;
+    list-style-position:outside ;
+    list-style-type:none ;
+    padding-bottom:5px ;
+    padding-left:5px ;
+    padding-right:4px ;
+    padding-top:5px ;
+    margin-bottom:5px ;
+    margin-top:8px ;
+    text-shadow:rgb(17, 17, 17) 0px -1px 0px ;
+    width:68px ;
+}
+
+
+#topRow{
+   /*background: #1a1a1a;*/
+}
+
+#mode-selection{
+   /*background: #1a1a1a;*/
+}
+
+#time-series-selection{
+   /*background: #1a1a1a;*/
+}
+*/
+
+
+#animctrl {
+    padding-top: 5px;
+}
+
+
+#animctrl #controlButtonWrapper{
+    padding-left: 10px;
+    padding-top: 5px;
+    margin-top:5px;
+    display:inline-block;
+    /* background:blue;*/
+    vertical-align: middle;
+    overflow-x: visible;
+    white-space: nowrap;
+}
+
+#animctrl #checkboxPlayLooped{
+  vertical-align: middle;
+}
+
+#animctrl #checkboxWrapper {
+    display:inline-block;
+    /*background:green;*/
+}
+
+#animctrl #sliderWrapper{
+  margin-bottom: 0px;
+  margin-top:    0px;
+  margin-left:   0px;
+  margin-right:  0px;
+  padding-bottom: 0px;
+  padding-top:    5px;
+  padding-left:  15px;
+  padding-right:  5px;
+  vertical-align: middle;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+}
+#animctrl #sliderWrapper #timeValue{
+    margin-top: 8px;
+}
+
+#animctrl .slider.slider-horizontal{
+    width: 80% !important; 
+    margin-left: 5px;
+    margin-right: 5px;
+}
 

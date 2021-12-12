@@ -47,7 +47,8 @@ sd2json:
 	python subDynModeViz.py examples/Pendulum.SD.sum.yaml
 
 server:
-	python -m http.server 8080
+	python subDynModeViz.py --open
+	#python -m http.server 8080
 
 
 # --- Common rules

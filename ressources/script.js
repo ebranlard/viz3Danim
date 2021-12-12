@@ -1,11 +1,7 @@
-// NOTES:
-// -  Press Ctrl+Shift+J in Chrome to debug
-// - console.log('text:', object)  to print
-
-
 import * as THREE from            './three.module.js';
 import { TrackballControls } from './TrackballControlsModule.js';
 import { GUI }               from './dat.gui.module.js';
+import * as TOOLS            from './helpersJS.js';
 import * as PLT              from './helpers3D.js';
 import * as WEB              from './helpersWEB.js';
 
@@ -18,30 +14,40 @@ var gui, guiTop, MainMenu; // Menu
 var menuAnim; // Menu
 var frustumSize
 var windowWidth, windowHeight;
+var slider;
 
 // --- Script data
 var params = {
     orthographicCamera: false, // Use parallel projection
-    animating: true, // animating
-    dt:  0.5, // time step
-    dt0: 0.5, // time step
-    time: 0, //  time
-    amplitude: 1.0, // amplitude
-    animID: "Loop",
+    animating: false, // animating
+    dt:  0.2, // dimensionless time step NOTE: init value set in enableGUI using _default value
+    t_bar: 0, // dimensionless time (between 0 and 1, based on tMin and tMax)
+    tMin: 0, //  min time
+    tMax: 1, //  max time
+    amplitude: 1.0, // amplitude NOTE: init value set in enableGUI using _default value
+    animID: "None",
     showBox: true, 
     showAxes: true, 
     showSeaBed: false, 
     showSeaLevel: false, 
     showThreeViews: false, 
 };
+var dt_min     = 0.0001;
+var dt_max     = 0.5   ;
+var dt_default = 0.2   ;
+var A_min      = 0.0001;
+var A_max      = 10    ;
+var A_default  = 1     ;
 
-// --- GUI objects
+
+// --- 3D objects
 var swl, grd ; // Main WT elements
 var axes     ; // Axes
 var box     ; // Surrounding box
 var extent
 
-// --- FEM / JSON data for mode shapes
+// --- FEM / JSON data
+var timeArray;
 var nElem,  Elems, Props ;  // Elements and ElementProperties
 var nNodes, Nodes ;  // Nodes
 var Connectivity  ;  // Connectivity mapping
@@ -52,6 +58,7 @@ var groundLevel;
 
 var vsplit=0.3
 var hsplit=0.333333
+
 
 var defaultView =  {
         left: 0,
@@ -199,17 +206,6 @@ function createWorldFromJSONStream(Jstream) {
         }
         pp.innerHTML=labels
 
-        // --- Setting params based on content of JSON
-        if (Modes.length == 0) {
-            params.animating=false;
-            params.animID="None";
-            //menuAnim.show();
-            iPlot = 0; // No plotting
-        } else {
-            params.animating=true;
-            params.animID="Loop";
-            iPlot = 1; // Plotting Modes
-        }
 
 
         // --- Estimate scene extent
@@ -219,7 +215,8 @@ function createWorldFromJSONStream(Jstream) {
         /* Create and add a wireframe cube to the scene, to show the edges of the cube. */
         var edgeGeometry = new THREE.EdgesGeometry(box_geo);  // contains edges of cube without diagonal edges
         box = new THREE.LineSegments(edgeGeometry, new THREE.LineBasicMaterial({color:0xffffff}));
-        box.position.set(extent.centerX, extent.centerY, extent.centerZ)
+        box.position.set(extent.centerX, extent.centerY+15, extent.centerZ)
+        //box.position.set(0,0,0);
         scene.add(box);
  
         /* Add planes*/
@@ -236,9 +233,27 @@ function createWorldFromJSONStream(Jstream) {
         axes.rotation.set(-Math.PI/2,0,Math.PI/2);
         scene.add( axes );
  
+
+        // --- Possibly start animating
+        if (Modes.length == 0) {
+            // TODO time series
+            params.animID="None";
+            //menuAnim.show();
+            iPlot = 0; // No plotting
+            !jQuery( "#playLooped" ).prop( "checked", false);
+            stopAnimation();
+        } else {
+            params.animating=true;
+            params.animID="Loop";
+            iPlot = 1; // Plotting Modes
+            !jQuery( "#playLooped" ).prop( "checked", true);
+            modeSelect();
+        }
+
         // --- Controls depend on camera
-        enableGUI() ;
+        enableGUI() ; // Will start animation if animating
         setupKeyboardControls();
+
 
     } catch (e) {
         console.log(e);
@@ -340,22 +355,22 @@ function camDefView(camera){
     camera.lookAt      ( extent.centerX, extent.centerY                    , extent.centerZ);
     return camera;
 }
-function camXView(camera){//  OpenFAST "-x" view is three z view
+function camXView(camera){//NOTE: used for "2D views",   OpenFAST "-x" view is three z view
     camera.position.set( extent.centerX, extent.centerY ,extent.centerZ + extent.maxDim*3);
     camera.lookAt      ( extent.centerX, extent.centerY, extent.centerZ                  );
     return camera;
 }
-function camXViewB(camera){//  OpenFAST "-x" view is three z view
-    camera.position.set( extent.centerX, extent.centerY*0,extent.maxDim*3);
-    camera.lookAt      ( extent.centerX, extent.centerY, extent.centerZ );
+function camXViewB(camera){//NOTE: used for main view,   OpenFAST "-x" view is three z view
+    camera.position.set( extent.centerX, extent.centerY*0,  extent.maxDim*3);
+    camera.lookAt      ( extent.centerX, extent.centerY  , extent.centerZ );
     return camera;
 }
-function camYView(camera){ // OpenFAST "y" view is three -x view
+function camYView(camera){//NOTE: used for "2D views",  OpenFAST "y" view is three -x view
     camera.position.set( extent.centerX-extent.maxDim*3, extent.centerY, extent.centerZ);
     camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
     return camera;
 }
-function camYBView(camera){ // OpenFAST "y" view is three -x view
+function camYBView(camera){//NOTE: used for main view, OpenFAST "y" view is three -x view
     camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
     camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
     return camera;
@@ -407,11 +422,11 @@ function zView() {
 }
 
 function getAvailableSpace(){
-    console.log('Window : ',window.innerWidth,window.innerHeight )
-    console.log('Canvas : ',canvas.width,canvas.height )
-    console.log('topRow : ', document.getElementById('topRow').offsetWidth, document.getElementById('topRow').offsetHeight)
+    //console.log('Window : ',window.innerWidth,window.innerHeight )
+    //console.log('Canvas : ',canvas.width,canvas.height )
+    //console.log('topRow : ', document.getElementById('topRow').offsetWidth, document.getElementById('topRow').offsetHeight)
     var width  = window.innerWidth ;
-    var height = window.innerHeight- document.getElementById('topRow').offsetHeight-25;
+    var height = window.innerHeight- document.getElementById('topRow').offsetHeight;
     return [width,height]
 }
 
@@ -547,9 +562,9 @@ function enableGUI() {
 
     // Default options
     //params.animating = true; // Animates or not
-    params.time =0 ;         
-    setDtFromJS(0.5) ;        // Time step
-    setAmplitudeFromJS(1.0) ;  // Amplitude of modes
+    params.t_bar =0 ;         
+    setDtFromJS(dt_default) ;        // Time step
+    setAmplitudeFromJS(A_default) ;  // Amplitude of modes
     showHide(params.showBox   ,   box);
     showHide(params.showAxes ,    axes);
     showHide(params.showSeaBed,   grd);
@@ -561,8 +576,7 @@ function enableGUI() {
     MainMenu.close();
 
     // --- Animate
-    requestAnimationFrame(doFrame);  // Start the animation.
-    //render();
+    startAnimation();
 }
 
 /**/
@@ -604,11 +618,11 @@ function setupGUI(){
     folder.open();
 
     menuAnim = gui.addFolder('Mode shape animation');
-    menuAnim.add(params,  'dt'       , 0.0001, 1.0).name( 'Freq. (w/s)').listen()
-    menuAnim.add(params,  'amplitude', 0.0001, 10 ).name( 'Ampl. (a/d)').listen().onChange(
+    menuAnim.add(params,  'dt'       , dt_min, dt_max).name( 'Freq. (w/s)').listen()
+    menuAnim.add(params,  'amplitude', A_min,  A_max).name( 'Ampl. (a/d)').listen().onChange(
         function(v){if(!params.animating){plotSceneAtTime();}}
     );
-    menuAnim.add(params, 'animID', [ 'Loop', 'Jumps', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch);
+    menuAnim.add(params, 'animID', [ 'Loop', 'Jumps', 'Max', 'None' ] ).name('Displ. ').onChange(animationSwitch).listen();
     //     folder.add(settings, 'speed', { Low: 0, Med: 0.5, High: 1 } );
     menuAnim.open( );
 
@@ -622,12 +636,12 @@ function setupGUI(){
 /** */
 function plotSceneAtTime() { 
     if ( params.animID=='Jumps' ) {
-       var fact = Math.round((params.time/3/params.dt*(params.dt/params.dt0)  % 1))*2 -1
+       var fact = Math.round((params.t_bar % 1))*2 -1
        fact = params.amplitude * fact;
     } else{
-       //var fact = params.amplitude * Math.sin(Modes[iMode].omega * params.time);
-       var fact = params.amplitude * Math.sin(1.0 * params.time);
+       var fact = params.amplitude * Math.sin(1.0 * params.t_bar * (2*Math.PI));
     }
+
 
     //console.log('Modes: '     , Modes);
     //console.log('TimeSeries: ', TimeSeries);
@@ -672,39 +686,90 @@ function plotSceneAtTime() {
 //--------------------------- animation support -----------------------------------
 function doFrame() {
     if (params.animating) {
-        params.time=params.time+params.dt/10;
-        plotSceneAtTime();
-        requestAnimationFrame(doFrame); 
+        params.t_bar=params.t_bar+params.dt/10;
+        if (params.t_bar>1 && !jQuery("#playLooped").is(":checked")){
+                params.t_bar=1;
+                updateTime();
+                plotSceneAtTime();
+                pauseAnimation();
+        } else {
+            params.t_bar = params.t_bar % 1.0 // Ensuring that t_bar stays between 0 and 1
+            updateTime();
+            plotSceneAtTime();
+            requestAnimationFrame(doFrame); 
+        }
     }
 }
+function updateTime(){
+    // Trigger when t_bar is set
+    if (iPlot==2) {
+        var time  = params.tMin + params.t_bar * (params.tMax-params.tMin)
+        jQuery("#time").html(" " + time.toFixed(3) + " s");
+        jQuery("#time-slider").slider("setValue", parseInt(params.t_bar*100));
+   }
+}
+
 function startAnimation() {
-    if (!params.animating) {
-       //prevTime = Date.now();
-	   params.animating = true;
-       //prevMixerTime = Date.now();
-	   requestAnimationFrame(doFrame);
-	}
+    //console.log('Start animation', params.animID);
+    //console.log('  t_bar is  : ',params.t_bar);
+    //console.log('  timeArray: ',timeArray);
+    if (params.t_bar>=1) {
+        params.t_bar=0;
+    }
+    if (iPlot==0) {
+        jQuery("#playAnimation").prop('disabled', true);
+        //plotSceneAtTime();
+    } else {
+       jQuery("#playAnimation").prop('disabled', true);
+       jQuery("#pauseAnimation").prop('disabled', false);
+       jQuery("#stopAnimation").prop('disabled', false);
+       params.animating = true;
+       requestAnimationFrame(doFrame);
+    }
 }
 function pauseAnimation() {
+    //console.log('Pause animation')
 	if (params.animating) {
 	    params.animating = false;
 	}
+    if (iPlot==0) {
+       jQuery("#playAnimation").prop('disabled', true);
+       jQuery("#stopAnimation").prop('disabled', true);
+    } else{
+       jQuery("#playAnimation").prop('disabled', false);
+       jQuery("#stopAnimation").prop('disabled', false);
+    }
+    jQuery("#pauseAnimation").prop('disabled', true);
+}
+function stopAnimation() {
+    //console.log('Stop Animation', iPlot, params.t_bar);
+    if (iPlot==0) {
+        jQuery("#playAnimation").prop('disabled', true);
+    }else{
+        jQuery("#playAnimation").prop('disabled', false);
+    }
+    jQuery("#pauseAnimation").prop('disabled', true);
+    jQuery("#stopAnimation").prop('disabled', true);
+    params.animating= false;
+    params.t_bar= 0; 
+    updateTime();
+    plotSceneAtTime();
 }
 function animationSwitch() {
     if ( params.animID=='Loop' ) {
     	startAnimation();
     } else if ( params.animID=='Jumps' ) {
-        params.time=0;
-        params.dt=0.5
-        params.dt0=0.5
+        params.t_bar=0;
+        params.dt=0.2
     	startAnimation();
     } else {
     	pauseAnimation();
         if ( params.animID=='Max' ) {
-           //params.time = Math.PI/(2*Modes[iMode].omega);
-           params.time = Math.PI/(2*1.0);
+           params.t_bar = 0.75;
+           updateTime();
         }else{ // None
-           params.time=0;
+           params.t_bar=0;
+           updateTime();
         }
         plotSceneAtTime();
     }
@@ -716,7 +781,7 @@ function setAmplitudeFromSlider() {
 }
 function setAmplitudeFromJS(ampl_in) { 
     // Set global variable
-    params.amplitude = Math.max(Math.min(ampl_in, 10),0.001) ;
+    params.amplitude = Math.max(Math.min(ampl_in, 2*A_max), A_min) ;
     // replot scene
     if (!params.animating) {
       plotSceneAtTime();
@@ -724,8 +789,7 @@ function setAmplitudeFromJS(ampl_in) {
 }
 function setDtFromJS(dt_in) { 
     // Set global variable
-    params.dt = Math.max(Math.min(dt_in, 10),0.0001) ;
-    // set HTML element
+    params.dt = Math.max(Math.min(dt_in, 2*dt_max),dt_min) ;
 }
 
 
@@ -737,17 +801,20 @@ function showHide(v, elem) {
 function modeSelect(){
     iPlot = 1; // Plotting Modes
     iMode = parseInt(document.querySelector('input[name="mode"]:checked').id);
+    params.tMin = 0;
+    params.tMax = 1;
+    timeArray = TOOLS.linspace(params.tMin, params.tMax, 100);
+    timeArray[100] = 0.999999;
     if (!params.animating) {
         if ( params.animID=='Max' ) {
-            //params.time = Math.PI/(2*Modes[iMode].omega);
-            params.time = Math.PI/(2*1.0)
+            params.t_bar = 0.75; 
         }else{
-            params.time=0;
+            params.t_bar=0;
         }
         plotSceneAtTime();
     }
     else{
-        params.time = 0;
+        params.t_bar = 0;
     }
 }
 //----------------------------------------------------------------------------------
@@ -830,4 +897,31 @@ function init() {
     }
 }
 
-export { init, setupGUI };
+
+function initAnimControl (){
+    // --- Slider TODO TODO
+    slider = jQuery("#time-slider").slider({min:0, max:100, step:1, handle:"triangle", value:0});
+    slider.on('slide',function(ev) {
+        params.t_bar = ev.value/100;
+        updateTime();
+        plotSceneAtTime();
+    });
+    jQuery("#playAnimation").click(function(){
+        //console.log('Play');
+        if (params.animID=='Max' || params.animID=='None') {
+            params.animID='Loop';  // Go back to loop if user press play
+        }
+        startAnimation();
+    });
+    jQuery("#pauseAnimation").click(function(){
+        //console.log('Pause');
+        pauseAnimation();
+    });
+    jQuery("#stopAnimation").click(function(){
+        //console.log('Stop');
+        stopAnimation();
+    });
+}
+
+
+export { init, setupGUI, initAnimControl };
