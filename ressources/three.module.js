@@ -5498,6 +5498,7 @@ Object3D.prototype = Object.assign( Object.create( EventDispatcher.prototype ), 
 			_target.set( x, y, z );
 
 		}
+                this._target = _target;
 
 		const parent = this.parent;
 

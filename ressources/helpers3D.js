@@ -139,10 +139,11 @@ function getExtent(scene){
     e.max = Math.max(e.max, Math.max(e.centerZ - e.zmin, e.zmax - e.centerZ) );
     e.scale = 10/e.max;
     //if (window.console) {
-    //       console.log("Get Extent, scale: " + e.scale, 'Max dim:', e.maxDim, 'Max rad',e.max);
-    //       console.log("Extent at ( ("+e.xmin+","+e.xmax+"), ("+e.ymin+","+e.ymax+"), ("+e.zmin+","+e.zmax+") )");
-    //       console.log("Center at ( " + e.centerX + ", " + e.centerY + ", " + e.centerZ + " )");
-    //       console.log(e);
+    //  console.log("Get Extent, scale: " + e.scale, 'Max dim:', e.maxDim, 'Max rad',e.max);
+    //  console.log("MinMax (("+e.xmin+","+e.xmax+"), ("+e.ymin+","+e.ymax+"), ("+e.zmin+","+e.zmax+") )");
+    //  console.log("Extent: " + e.extentX, e.extentY, e.extentZ);
+    //  console.log("Center at ( " + e.centerX + ", " + e.centerY + ", " + e.centerZ + " )");
+    //  console.log(e);
     //}
     return e;
 }

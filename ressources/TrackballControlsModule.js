@@ -6,7 +6,7 @@ import {
 	Vector3
 } from "./three.module.js";
 
-var TrackballControls = function ( object, domElement ) {
+var TrackballControls = function ( object, domElement, target_ ) {
 
 	if ( domElement === undefined ) console.warn( 'THREE.TrackballControls: The second parameter "domElement" is now mandatory.' );
 	if ( domElement === document ) console.error( 'THREE.TrackballControls: "document" should not be used as the target "domElement". Please use "renderer.domElement" instead.' );
@@ -44,6 +44,7 @@ var TrackballControls = function ( object, domElement ) {
 	// internals
 
 	this.target = new Vector3();
+        this.target = target_;
 
 	var EPS = 0.000001;
 

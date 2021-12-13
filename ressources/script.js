@@ -8,6 +8,7 @@ import * as WEB              from './helpersWEB.js';
 // --- GUI data
 var renderer, scene;   // Three.js rendering basics.
 var perspectiveCamera, orthographicCamera;
+var defaultTarget;   // The target for the scene (where camera look at), typically center of scene
 var canvas;   // The canvas on which the renderer will draw.
 var controls; // an object of type TrackballControls, the handles rotation using the mouse.
 var gui, guiTop, MainMenu; // Menu
@@ -215,7 +216,7 @@ function createWorldFromJSONStream(Jstream) {
         /* Create and add a wireframe cube to the scene, to show the edges of the cube. */
         var edgeGeometry = new THREE.EdgesGeometry(box_geo);  // contains edges of cube without diagonal edges
         box = new THREE.LineSegments(edgeGeometry, new THREE.LineBasicMaterial({color:0xffffff}));
-        box.position.set(extent.centerX, extent.centerY+15, extent.centerZ)
+        box.position.set(extent.centerX, extent.centerY, extent.centerZ)
         //box.position.set(0,0,0);
         scene.add(box);
  
@@ -271,12 +272,13 @@ function togglePerspective(){
 }
 /* Crete camera, light and view controls */
 function createCamera(){
-
     var width  = windowWidth
     var height = windowHeight
     var AR = width/height;
     var h = height;
     var w = width;
+    // Default target
+    defaultTarget = new THREE.Vector3(extent.centerX, extent.centerY, extent.centerZ); 
 //     if (AR >1 ) {
 //         var h = extent.maxDim*2.0;
 //         var w = h*AR;
@@ -291,6 +293,7 @@ function createCamera(){
         -extent.maxDim*50, 
         extent.maxDim*50);
     perspectiveCamera  = new THREE.PerspectiveCamera(40, windowWidth/windowHeight, extent.maxDim*0.005, extent.maxDim*50);
+
 
     // Default view
     perspectiveCamera  = camDefView(perspectiveCamera);
@@ -352,40 +355,25 @@ function toggleThreeViews(v){
 
 function camDefView(camera){
     camera.position.set( extent.centerX, extent.centerY + extent.maxDim*0.1, extent.centerZ + extent.maxDim*5);
-    camera.lookAt      ( extent.centerX, extent.centerY                    , extent.centerZ);
+    camera.lookAt      (defaultTarget);
+    camera.updateProjectionMatrix();
     return camera;
 }
-function camXView(camera){//NOTE: used for "2D views",   OpenFAST "-x" view is three z view
+function camXView(camera){// OpenFAST "-x" view is three z view
     camera.position.set( extent.centerX, extent.centerY ,extent.centerZ + extent.maxDim*3);
-    camera.lookAt      ( extent.centerX, extent.centerY, extent.centerZ                  );
+    camera.lookAt      (defaultTarget);
     return camera;
 }
-function camXViewB(camera){//NOTE: used for main view,   OpenFAST "-x" view is three z view
-    camera.position.set( extent.centerX, extent.centerY*0,  extent.maxDim*3);
-    camera.lookAt      ( extent.centerX, extent.centerY  , extent.centerZ );
-    return camera;
-}
-function camYView(camera){//NOTE: used for "2D views",  OpenFAST "y" view is three -x view
+function camYView(camera){// OpenFAST "y" view is three -x view
     camera.position.set( extent.centerX-extent.maxDim*3, extent.centerY, extent.centerZ);
-    camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
-    return camera;
-}
-function camYBView(camera){//NOTE: used for main view, OpenFAST "y" view is three -x view
-    camera.position.set(-extent.maxDim*3,extent.centerY*0,extent.centerZ);
-    camera.lookAt      ( extent.centerX                , extent.centerY, extent.centerZ );
+    camera.lookAt      (defaultTarget);
     return camera;
 }
 function camZView(camera){ // OpenFAST "z" view is three y view // NOTE: rotation matrix sensitive
     camera.position.set( extent.centerX, extent.centerY+extent.maxDim*3, extent.centerZ+0.0001); 
-    camera.lookAt      ( extent.centerX, extent.centerY                , extent.centerZ+0.0001);
+    camera.lookAt      (defaultTarget);
     return camera;
 }
-function camZBView(camera){ // OpenFAST "z" view is three y view // NOTE: rotation matrix sensitive
-    camera.position.set( 0.0000        , extent.maxDim*3               , extent.centerZ+0.0001);
-    camera.lookAt      ( extent.centerX, extent.centerY                , extent.centerZ+0.0001);
-    return camera;
-}
-
 
 function resetControls() {
     controls.reset();
@@ -393,10 +381,11 @@ function resetControls() {
       plotSceneAtTime();
     }
 }
+// Setting Main camera to X,Y,or Z view
 function xView() {
-    //controls.reset();
+    controls.reset();
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera = camXViewB(camera);
+    camera = camXView(camera);
     camera.updateProjectionMatrix();
     if (!params.animating) {
       plotSceneAtTime();
@@ -405,7 +394,7 @@ function xView() {
 function yView() {
     controls.reset();
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera = camYBView(camera);
+    camera = camYView(camera);
     camera.updateProjectionMatrix();
     if (!params.animating) {
       plotSceneAtTime();
@@ -414,7 +403,7 @@ function yView() {
 function zView() {
     controls.reset();
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
-    camera = camZBView(camera);
+    camera = camZView(camera);
     camera.updateProjectionMatrix();
     if (!params.animating) {
       plotSceneAtTime();
@@ -471,7 +460,7 @@ function createControls(camera) {
     if (controls) {
         controls.dispose();
     }
-    controls = new TrackballControls(camera, canvas);  // note: TrackballControls require animation.
+    controls = new TrackballControls(camera, canvas, defaultTarget);  // note: TrackballControls require animation.
     controls.noPan = false;   // Don't do panning with the right mosue button.
     controls.noZoom = false;  // Don't do zooming with middle mouse button.
     //controls.staticMoving = true;
