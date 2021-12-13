@@ -52,9 +52,9 @@ var timeArray;
 var nElem,  Elems, Props ;  // Elements and ElementProperties
 var nNodes, Nodes ;  // Nodes
 var Connectivity  ;  // Connectivity mapping
-var iMode, Modes, Displ;  // Modes data
-var iTS, TimeSeries;      // Time series data
-var iPlot=0;      // Switch between kind of plots iPlot=1: Modes, iPlot=2: TimeSeries
+var keyMode, iMode, Modes, Displ;  // Modes data
+var keyTS, iTS, TimeSeries;      // Time series data
+var iPlot=0;      // Switch between kind of plots iPlot=0: None, iPlot=1: Modes, iPlot=2: TimeSeries
 var groundLevel;
 
 var vsplit=0.3
@@ -137,8 +137,19 @@ function createWorldFromJSONStream(Jstream) {
         Modes        = AJ.Modes       ;
         Props        = AJ.ElemProps   ;
         TimeSeries   = AJ.TimeSeries  ;
-        if (TimeSeries == null) { TimeSeries = []};
-        if (Modes == null) { Modes = []};
+        if (TimeSeries == null) { TimeSeries = {} };
+        if (Modes == null) { Modes = {} };
+        if (typeof Modes.length === 'number') {
+            console.log('>>> Legacy format for Modes detected')
+            if (Modes.length>0){
+                Modes = { default: Modes } 
+            }
+        }
+        console.log('Mode keys: '      , Object.keys(Modes).length)
+        console.log('TimeSeries keys: ', Object.keys(TimeSeries).length)
+
+
+
         Connectivity = AJ.Connectivity;
         groundLevel  = AJ.groundLevel;
         nNodes = Nodes.length;
@@ -179,16 +190,20 @@ function createWorldFromJSONStream(Jstream) {
         // --- Creating HTML to select modes
         var pp= document.getElementById('mode-selection');
         var labels='';
-        if (Modes.length==0) {
+        if (Object.keys(Modes).length==0) {
             labels='&nbsp;&nbsp;&nbsp;&nbsp;No modes in file.'
         } else {
-            for (var i = 0; i < Modes.length; i++) {
-                labels+='<label class="radio"><input type="radio" name="mode" id="'+i+'"'
-                if (i==0){
-                    iMode =i // We select the first mode
-                    labels+=' checked="checked"';
+            var j;
+            j=0;
+            for (var key in Modes){
+                for (var i = 0; i < Modes[key].length; i++) {
+                    labels+='<label class="radio"><input type="radio" name="mode" id="'+key+'_'+i+'"'
+                    if (i==0 && j==0){ // We selct the first mode
+                        labels+=' checked="checked"';
+                    }
+                    labels+='/>'+Modes[key][i].name+'</label>';
                 }
-                labels+='/>'+Modes[i].name+'</label>';
+                j+=1;
             }
         }
         pp.innerHTML=labels
@@ -200,13 +215,27 @@ function createWorldFromJSONStream(Jstream) {
         // --- Creating HTML to select time series
         var pp= document.getElementById('time-series-selection');
         var labels='';
-        if (TimeSeries.length==0) {
+        if (Object.keys(TimeSeries).length==0) {
             labels='&nbsp;&nbsp;&nbsp;&nbsp;No time series in file.'
         } else {
-            labels='TODO: time series in file.'
+            var j;
+            j=0;
+            for (var key in TimeSeries){
+                for (var i = 0; i < TimeSeries[key].length; i++) {
+                    labels+='<label class="radio"><input type="radio" name="timeSeries" id="'+key+'_'+i+'"'
+                    if (i==0 && j==0){
+                        labels+=' checked="checked"';
+                    }
+                    labels+='/>'+TimeSeries[key][i].name+'</label>';
+                }
+                j+=1;
+            }
         }
         pp.innerHTML=labels
-
+        pp.children;
+        for (var i = 0; i < pp.children.length; i++) {
+            pp.children[i].onclick = timeSeriesSelect;
+        }
 
 
         // --- Estimate scene extent
@@ -236,19 +265,23 @@ function createWorldFromJSONStream(Jstream) {
  
 
         // --- Possibly start animating
-        if (Modes.length == 0) {
-            // TODO time series
-            params.animID="None";
-            //menuAnim.show();
-            iPlot = 0; // No plotting
-            !jQuery( "#playLooped" ).prop( "checked", false);
-            stopAnimation();
-        } else {
+        if (Object.keys(Modes).length > 0) {
+            iPlot=1;
             params.animating=true;
             params.animID="Loop";
-            iPlot = 1; // Plotting Modes
             !jQuery( "#playLooped" ).prop( "checked", true);
             modeSelect();
+            //menuAnim.show();
+        } else if (Object.keys(TimeSeries).length >0 ) {
+            iPlot=2;
+            params.animID="Loop";
+            !jQuery( "#playLooped" ).prop( "checked", true);
+            timeSeriesSelect();
+        } else {
+            iPlot=0;
+            params.animID="None";
+            !jQuery( "#playLooped" ).prop( "checked", false);
+            stopAnimation();
         }
 
         // --- Controls depend on camera
@@ -630,8 +663,6 @@ function plotSceneAtTime() {
     } else{
        var fact = params.amplitude * Math.sin(1.0 * params.t_bar * (2*Math.PI));
     }
-
-
     //console.log('Modes: '     , Modes);
     //console.log('TimeSeries: ', TimeSeries);
     //if(hasOwnProperty('field'))
@@ -646,15 +677,16 @@ function plotSceneAtTime() {
     } else if (iPlot==1) {
         //--- Plotting Modes based on Displacement field
         //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
+        var Displ=Modes[keyMode][iMode].Displ;
+
         for (var iElem = 0; iElem < nElem; iElem++) {
            var i1 = Connectivity[iElem][0]
            var i2 = Connectivity[iElem][1]
            // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
            // TODO TODO TODO RIGID LINKS!!!
-
-           if ((i1<Modes[iMode].Displ.length) && (i2<Modes[iMode].Displ.length)) {
-               var P1 = new THREE.Vector3(-Nodes[i1][1] - Modes[iMode].Displ[i1][1]*fact, Nodes[i1][2] + Modes[iMode].Displ[i1][2]*fact, -Nodes[i1][0] - Modes[iMode].Displ[i1][0]*fact)
-               var P2 = new THREE.Vector3(-Nodes[i2][1] - Modes[iMode].Displ[i2][1]*fact, Nodes[i2][2] + Modes[iMode].Displ[i2][2]*fact, -Nodes[i2][0] - Modes[iMode].Displ[i2][0]*fact)
+           if ((i1<Displ.length) && (i2<Displ.length)) {
+               var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[i1][1]*fact, Nodes[i1][2] + Displ[i1][2]*fact, -Nodes[i1][0] - Displ[i1][0]*fact)
+               var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[i2][1]*fact, Nodes[i2][2] + Displ[i2][2]*fact, -Nodes[i2][0] - Displ[i2][0]*fact)
            } else {
                console.log('PROBLEM, LIKELY RIGID LINK, TODO!')
            }
@@ -664,8 +696,86 @@ function plotSceneAtTime() {
         }
     } else if (iPlot==2) {
         // ---- Plot time series
-        console.log('TODO plot time series');
-        console.log('iPlot: ', iPlot);
+        function logMatrix(svar, matrix) {
+            var e = matrix.elements;
+            console.log(svar+'=');
+            console.log(' ' + e[0] + ' ' + e[4] + ' ' + e[8]  + ' ' + e[12]);
+            console.log(' ' + e[1] + ' ' + e[5] + ' ' + e[9]  + ' ' + e[13]);
+            console.log(' ' + e[2] + ' ' + e[6] + ' ' + e[10] + ' ' + e[14]);
+            console.log(' ' + e[3] + ' ' + e[7] + ' ' + e[11] + ' ' + e[15]);
+        }
+// 
+        var time = params.tMin + params.t_bar * (params.tMax-params.tMin)
+        var time_index = TOOLS.closestIndex(timeArray, time);
+        /* THREE.Object3D().up (=Y) default orientation for all objects */
+        /* rotation around axis X by -90 degrees 
+         * matches the default orientation Y 
+         * with the orientation of looking Z */
+        var M1=new THREE.Matrix4();
+        M1.set(0 ,-1  , 0 , 0 , 
+               0 , 0  , 1 , 0 , 
+               -1, 0 , 0 , 0  , 
+               0 , 0  , 0 , 1);
+        var Mat4=TimeSeries[keyTS][iTS].mat4
+//         console.log('Mat4',Mat4);
+//         console.log('time',time);
+//         console.log('time_index',time_index);
+        if (TimeSeries[keyTS][iTS].absolute) {
+            // --- TimeSeries data is absolute motion
+            if (TimeSeries[keyTS][iTS].element) {
+               alert('NotImplementedError Time series per element');
+                for (var iElem = 0; iElem < nElem; iElem++) {
+                   var elements= new Float32Array(Mat4[time_index][iElem]);
+                   var m1 = new THREE.Matrix4();
+                   m1.elements = elements1;
+                   m1=m1.multiply(M1); // go from global system to THREE system
+                   Elems[iElem].matrix.identity()
+                   Elems[iElem].applyMatrix(m1);
+                }
+            } else {
+               alert('NotImplementedError');
+            }
+
+        } else { 
+            // --- TimeSeries data is relative motion
+            if (TimeSeries[keyTS][iTS].element) {
+               alert('NotImplementedError Time series per element');
+            } else { 
+                for (var iElem = 0; iElem < nElem; iElem++) {
+                   var i1 = Connectivity[iElem][0]
+                   var i2 = Connectivity[iElem][1]
+                   var elements1= new Float32Array(Mat4[time_index][i1]);
+                   var elements2= new Float32Array(Mat4[time_index][i2]);
+                   var m1 = new THREE.Matrix4();
+                   var m2 = new THREE.Matrix4();
+                   m1.elements = elements1;
+                   m2.elements = elements2;
+        //            logMatrix('m1', m1);
+        //            var mm1 =m1.multiply(M1); // go from global system to THREE system
+        //            var mm2 =m2.multiply(M1); // go from global system to THREE system
+        //            logMatrix('m1', mm1);
+        //            console.log('m1',mm1);
+        //            console.log('m2',mm2);
+                   var DP1 = new THREE.Vector3().setFromMatrixPosition(m1); // In "global" coordinates not THREE
+                   var DP2 = new THREE.Vector3().setFromMatrixPosition(m2);
+    //                console.log('DP1',DP1)
+    //                console.log('DP2',DP2)
+                   //var P1 = new THREE.Vector3(-Nodes[i1][1], Nodes[i1][2], -Nodes[i1][0])
+                   //var P2 = new THREE.Vector3(-Nodes[i2][1], Nodes[i2][2], -Nodes[i2][0])
+        //            var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1[1], Nodes[i1][2]+ DP1[2],-Nodes[i1][0] -DP1[0]);
+        //            var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2[1], Nodes[i2][2]+ DP2[2],-Nodes[i2][0] -DP2[0]);
+                   // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
+                   var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1.y, Nodes[i1][2]+ DP1.z,-Nodes[i1][0] -DP1.x);
+                   var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2.y, Nodes[i2][2]+ DP2.z,-Nodes[i2][0] -DP2.x);
+                   var arr = PLT.segmentOrient(P1,P2);
+                   Elems[iElem].setRotationFromMatrix(arr[0])
+                   Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+    //                console.log('P1',P1);
+    //                console.log('P2',P2);
+                }
+            }
+        }
+//         Exception
     }
     controls.update();
     render();
@@ -789,7 +899,9 @@ function showHide(v, elem) {
 }
 function modeSelect(){
     iPlot = 1; // Plotting Modes
-    iMode = parseInt(document.querySelector('input[name="mode"]:checked').id);
+    const key_id = document.querySelector('input[name="mode"]:checked').id.split('_')
+    keyMode = key_id[0];
+    iMode   = parseInt(key_id[1]);
     params.tMin = 0;
     params.tMax = 1;
     timeArray = TOOLS.linspace(params.tMin, params.tMax, 100);
@@ -806,6 +918,27 @@ function modeSelect(){
         params.t_bar = 0;
     }
 }
+
+function timeSeriesSelect(){
+    iPlot = 2; // Plotting Modes
+    const key_id = document.querySelector('input[name="timeSeries"]:checked').id.split('_')
+    keyTS = key_id[0];
+    iTS   = parseInt(key_id[1]);
+    //console.log('>>> timeSeriesSelect ID:',keyTS, iTS)
+    //console.log(TimeSeries[keyTS][iTS].timeInfo)
+    var nt =  TimeSeries[keyTS][iTS].timeInfo.nt;
+    var dt =  TimeSeries[keyTS][iTS].timeInfo.dt;
+    params.tMin = TimeSeries[keyTS][iTS].timeInfo.tMin;
+    params.tMax = params.tMin + nt*dt;
+    timeArray = TOOLS.linspace(params.tMin, params.tMax, nt);
+    params.t_bar=0;
+    if (!params.animating) {
+        plotSceneAtTime();
+    }
+    else{
+    }
+}
+
 //----------------------------------------------------------------------------------
 /* Load button action*/
 function onLoad(){
