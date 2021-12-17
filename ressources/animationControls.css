@@ -6,11 +6,11 @@
 /* ICONS */
 @font-face{
      font-family:'Glyphicons Halflings';
-     src:url(../../ressources/fonts/glyphicons-halflings-regular.eot);
-     src:url(../../ressources/fonts/glyphicons-halflings-regular.eot?#iefix) format('embedded-opentype'),
-     url(../../ressources/fonts/glyphicons-halflings-regular.woff) format('woff'), 
-     url(../../ressources/fonts/glyphicons-halflings-regular.ttf) format('truetype'), 
-     url(../../ressources/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular) format('svg') 
+     src:url(../ressources/fonts/glyphicons-halflings-regular.eot);
+     src:url(../ressources/fonts/glyphicons-halflings-regular.eot?#iefix) format('embedded-opentype'),
+     url(../ressources/fonts/glyphicons-halflings-regular.woff) format('woff'), 
+     url(../ressources/fonts/glyphicons-halflings-regular.ttf) format('truetype'), 
+     url(../ressources/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular) format('svg') 
 }
 #animctrl .glyphicon{
     position:relative;

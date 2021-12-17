@@ -1,21 +1,66 @@
 # viz3Danim
 
-Visualize 3D animations and structures (for OpenFAST for now).
+Visualize 3D structures, mode shapes and animations.
 
-Two different applications are provided: a python app (.dat, .yaml), or a web browser app (.json files).
+Two different applications are provided:
 
-A live and active version of the web GUI is available [here](https://ebranlard.github.io/viz3Danim/)
+  - a web browser app (.json files), see the active version [with an example](https://ebranlard.github.io/viz3Danim/index.html?load= examples/OC4_Jacket_All.sum.json) or  [without](https://ebranlard.github.io/viz3Danim/) 
+
+  - a python app (.dat, .yaml), in beta
 
 
 See documentation below for the Python app and Web App.
 
 
 
-# Python App
+
+
+## Json file format
+The input files are `.json` files.  The content of the file is faily simple: list of nodes, connectivity matrix defining elements, and nodal displacements for each modes/time series.
+The format is undocumented for now, as it might evolve in the future. 
+Example files are located in the `examples` folder of this repository. 
+
+
+The `json` files can be generated using: 
+
+ - SubDyn (part of [OpenFAST](https://github.com/openfast/openfast)). Setting the options `OutCBModes` and `OutFEMModes`, see [here](https://openfast.readthedocs.io/en/dev/source/user/subdyn/input_files.html#output-summary-and-outfile).
+
+ - The python module `graph.py` and finite element (FEM) module of [welib](https://github.com/ebranlard/welib). See [examples](https://github.com/ebranlard/welib/tree/dev/welib/FEM/examples).
+
+
+
+## Web App
+A live and active version of the web GUI is available [here with an example](https://ebranlard.github.io/viz3Danim/index.html?load= examples/OC4_Jacket_All.sum.json) or [here without an example](https://ebranlard.github.io/viz3Danim/).
+
+### Basic help
+
+- To open a file in the Web App, simply dragging and drop a `json` file into your browser.
+
+- For more help, look at "Menu -> Help", in particular for some keyboard shortcuts to scale the modes amplitudes and frequencies. 
+
+### Keyboard shortcuts
+a: increase amplitude
+d: decrease amplitude
+w: speed up 
+s: slow down 
+
+
+
+### Running the Web App locally.
+You can run with Web App without internet. Simply clone this repository, install the dependencies (`python -m pip install -r requirements.txt`) and run `make server` from the root of the repository.
+This should create a local web server and launch the local version of the web app into your browser.
+
+
+
+
+
+
+
+## Python App (Beta)
 
 The python app can open SubDyn and HydroDyn inputs files (.dat), and SubDyn yaml files (.yaml) to display the modes.
 
-##Installation:
+###Installation:
 ```bash
 git clone --recurse-submodules http://github.com/ebranlard/viz3danim
 cd viz3danim
@@ -27,46 +72,26 @@ If you forgot the `recurse-submodules` flag, and you end up with errors that `we
 git submodule update --init --recursive
 ```
 
-##Running:
+###Running:
 ```bash
 python viz3danim.py
 ```
 
 Drag and drop files.
 
-## Keyboard shortcuts
-
-a: increase amplitude
-d: decrease amplitude
-w: speed up 
-s: slow down 
 
 
 
 
-# Web App
-Input files are `json` files with an undocumented format for now, which may evolve. Example files are located in the `examples` folder. 
-
-A live and active version of the web GUI is available [here](https://ebranlard.github.io/viz3Danim/)
-
-An example of this same live version with a loaded example file is available [here](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket.sum.json).
 
 
-## Basic help
+## SubDyn modes visualization (legacy)
 
-Look at "Menu -> Help", in particular for some keyboard shortcuts to scale the modes. 
+The latest version of SubDyn can generate the '.json' file with Craig-Bampton, Guyan and FEM mode shapes.
+Simply drag and drop the `.json` files into the browser.
+There is no need to follow the step below.
 
-
-## SubDyn modes visualization
-
-This describes how to visualize the Guyan and CB modes in the SubDyn summary file.
-
-### Testing it
-If you want to try it out without cloning anything, some input files are located in the `examples` folder, you can drag and drop each of them to the web-app that I've hosted [here](https://ebranlard.github.io/viz3Danim/)
-
-Look at "Menu -> Help", in particular for some keyboard shortcuts to scale the modes. 
-
-### Doing it
+### Generating a json file from a summary file:
 There are two steps for now:
 1.	Convert the yaml file to a "json" file, using a standalone python script called `subDynModeViz
 2.	Load the json file into the web-gui, which requires a web-server (more on that later). 
@@ -75,8 +100,6 @@ We can make that 1 step in the future if needed.
 For convenience the python script can launch step 2 automatically. 
 
 The python script and web-app are located in this repository (i.e. [here](https://github.com/ebranlard/viz3Danim))
-
-      
 
 
 ### Step 1 (and 2): 
@@ -97,15 +120,7 @@ The python script and web-app are located in this repository (i.e. [here](https:
       # then open a browser and navigate to https://localhost:8000/
 ```
 
-## Notes
-
 ### Current limitations:
-- Only for mode shape vizualization for now
-- "json" format undocumented, and generated from SubDyn summary files only. 
-
-### Some notes:
-- The perspective and views of the GUI are not always well centered (you can "pan" with right click).
-- The Guyan modes have a default frequency of 1, the CB modes usually have a high frequency, so you need to use the frequency scaling  slider to slow them down (or holding the w and s keys). 
-- The diameter is estimated based on the area, so it’s not the actual diameter for now. 
+- "json" format undocumented
 
 
