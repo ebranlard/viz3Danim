@@ -4,7 +4,7 @@ Visualize 3D structures, mode shapes and animations.
 
 Two different applications are provided:
 
-  - a web browser app (.json files), see the active version [with an example](https://ebranlard.github.io/viz3Danim/index.html?load= examples/OC4_Jacket_All.sum.json) or  [without](https://ebranlard.github.io/viz3Danim/) 
+  - a web browser app (.json files), see the active version [with an example](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket_All.sum.json) or  [without](https://ebranlard.github.io/viz3Danim/) 
 
   - a python app (.dat, .yaml), in beta
 
@@ -30,7 +30,7 @@ The `json` files can be generated using:
 
 
 ## Web App
-A live and active version of the web GUI is available [here with an example](https://ebranlard.github.io/viz3Danim/index.html?load= examples/OC4_Jacket_All.sum.json) or [here without an example](https://ebranlard.github.io/viz3Danim/).
+A live and active version of the web GUI is available [here with an example](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket_All.sum.json) or [here without an example](https://ebranlard.github.io/viz3Danim/).
 
 ### Basic help
 
