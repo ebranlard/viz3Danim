@@ -1,4 +1,3 @@
-*.json
 *.yaml
 _*
 !__init__.py
