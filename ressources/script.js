@@ -204,6 +204,9 @@ function createWorldFromJSONStream(Jstream) {
                     labels+='/>'+Modes[key][i].name+'</label>';
                 }
                 j+=1;
+                if (j< Object.keys(Modes).length) {
+                   labels+='<br>';
+                }
             }
         }
         pp.innerHTML=labels
@@ -687,12 +690,12 @@ function plotSceneAtTime() {
            if ((i1<Displ.length) && (i2<Displ.length)) {
                var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[i1][1]*fact, Nodes[i1][2] + Displ[i1][2]*fact, -Nodes[i1][0] - Displ[i1][0]*fact)
                var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[i2][1]*fact, Nodes[i2][2] + Displ[i2][2]*fact, -Nodes[i2][0] - Displ[i2][0]*fact)
+               var arr = PLT.segmentOrient(P1,P2);
+               Elems[iElem].setRotationFromMatrix(arr[0])
+               Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
            } else {
-               console.log('PROBLEM, LIKELY RIGID LINK, TODO!')
+               console.log('PROBLEM, LIKELY RIGID LINK, TODO!', iElem, i1, i2, Displ.length);
            }
-           var arr = PLT.segmentOrient(P1,P2);
-           Elems[iElem].setRotationFromMatrix(arr[0])
-           Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
         }
     } else if (iPlot==2) {
         // ---- Plot time series
