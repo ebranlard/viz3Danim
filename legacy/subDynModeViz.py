@@ -129,7 +129,7 @@ def subDyn2Json(subDynSumFile):
 
     print('>>> Reading yaml file:',subDynSumFile)
     if os.path.splitext(subDynSumFile)[1].lower() != '.yaml':
-        raise Exception('File etension should be .yaml, file:'+subDynSumFile)
+        raise Exception('File extension should be .yaml, file:'+subDynSumFile)
     data =yaml_read(subDynSumFile)
 
     DOF2Nodes = data['DOF2Nodes']
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     # adding viz3danim to python path. Not clean, but this is legacy code anyway
     sys.path.append(viz3danimDir)
-    from webapp import Serverimport
+    from webapp import Server
 
     # Based on command line arguments, convert subdyn file, and/or open local server
     if len(sys.argv) ==2 and sys.argv[1]=='--open':
