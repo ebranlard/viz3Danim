@@ -2,7 +2,7 @@
 <a href="https://www.buymeacoffee.com/hTpOQGl" rel="nofollow"><img alt="Donate just a small amount, buy me a coffee!" src="https://warehouse-camo.cmh1.psfhosted.org/1c939ba1227996b87bb03cf029c14821eab9ad91/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f446f6e6174652d4275792532306d6525323061253230636f666665652d79656c6c6f77677265656e2e737667"></a>
 # viz3Danim
 
-Interactive visualization of 3D structures, mode shapes and animations, using a json file format (described [here](json-file-format)).
+Interactive visualization of 3D structures, mode shapes and animations, using a json file format (described [here](#json-file-format)).
 
 
 [![Demo](/../main/ressources/figs/demo.gif)](https://ebranlard.github.io/viz3Danim/index.html?load=examples/OC4_Jacket_All.sum.json)
@@ -66,7 +66,7 @@ Two "modes" are included, where the base of the triangle moves rigidly along the
   }
 }
 ```
-Loading this `json` file results in the following 3d visualization:
+Loading this `json` file results in the following 3d visualization (click on the image to visualize the mode in the live version of the web app):
 
 
 [<img alt="alt_text" width="300px" src="/../main/ressources/figs/triangle.png" />](https://ebranlard.github.io/viz3Danim/index.html?load=examples/triangle.json)
@@ -109,11 +109,9 @@ If your browswer does not open automatically, open it, and navigate to `https://
 
 ## SubDyn modes visualization (legacy)
 
-The latest version of SubDyn (part of [OpenFAST](https://github.com/openfast/openfast)) can generate the '.json' file with Craig-Bampton, Guyan and FEM mode shapes.
-Simply drag and drop the `.json` files into the browser.
-There is no need to follow the step below.
+The latest version of SubDyn (part of [OpenFAST](https://github.com/openfast/openfast)) can generate the '.json' file with Craig-Bampton, Guyan and FEM mode shapes by setting the options `OutCBModes` and `OutFEMModes`, in the SubDyn input file (see [here](https://openfast.readthedocs.io/en/dev/source/user/subdyn/input_files.html#output-summary-and-outfile)). After running SubDyn, simply drag and drop the generated `.json` files into the browser. There is no need to follow the step below which are for older version of SubDyn.
 
-### Generating a json file from a summary file:
+### Generating a json file from a SubDyn summary file:
 There are two steps for now:
 1.	Convert the yaml file to a "json" file, using a standalone python script called `subDynModeViz` located in the `legacy` folder`
 2.	Load the json file into the web-gui, which requires a web-server (more on that later). 
@@ -145,11 +143,16 @@ The python script and web-app are located in this repository (i.e. [here](https:
 
 
 
+# Debugging
+
+Most browser can open a debugging console by pressing `Ctrl+Shift+J`. Error messages from javascript will be reported in the Console window, together with some log outputs from the app.
+
+To force reload the webapp use `Ctrl-F5`, this will reload all the files included (otherwise cached versions are used).
 
 
 
 # Contributing
-Any contributions to this project are welcome! If you want to add feature to this repository, the best approach would be to open an issue and start the discussion there.
+Any contributions to this project are welcome! If you want to add a feature to this program or report a bug, the best approach would be to open an issue and start the discussion there.
 
 
 If you find this project useful, you can also buy me a coffee (donate a small amount) with the link below:

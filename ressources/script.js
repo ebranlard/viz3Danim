@@ -52,7 +52,7 @@ var timeArray;
 var nElem,  Elems, Props ;  // Elements and ElementProperties
 var nNodes, Nodes ;  // Nodes
 var Connectivity  ;  // Connectivity mapping
-var keyMode, iMode, Modes, Displ;  // Modes data
+var keyMode, iMode, Modes;  // Modes data
 var keyTS, iTS, TimeSeries;      // Time series data
 var iPlot=0;      // Switch between kind of plots iPlot=0: None, iPlot=1: Modes, iPlot=2: TimeSeries
 var groundLevel;
@@ -719,8 +719,9 @@ function plotSceneAtTime() {
                0 , 0  , 1 , 0 , 
                -1, 0 , 0 , 0  , 
                0 , 0  , 0 , 1);
-        var Mat4=TimeSeries[keyTS][iTS].mat4
-//         console.log('Mat4',Mat4);
+        var Mat4  = TimeSeries[keyTS][iTS].mat4
+        var Displ = TimeSeries[keyTS][iTS].Displ
+        var TSHasmat4 =  Mat4!=null
 //         console.log('time',time);
 //         console.log('time_index',time_index);
         if (TimeSeries[keyTS][iTS].absolute) {
@@ -744,42 +745,54 @@ function plotSceneAtTime() {
             if (TimeSeries[keyTS][iTS].element) {
                alert('NotImplementedError Time series per element');
             } else { 
-                for (var iElem = 0; iElem < nElem; iElem++) {
-                   var i1 = Connectivity[iElem][0]
-                   var i2 = Connectivity[iElem][1]
-                   var elements1= new Float32Array(Mat4[time_index][i1]);
-                   var elements2= new Float32Array(Mat4[time_index][i2]);
-                   var m1 = new THREE.Matrix4();
-                   var m2 = new THREE.Matrix4();
-                   m1.elements = elements1;
-                   m2.elements = elements2;
-        //            logMatrix('m1', m1);
-        //            var mm1 =m1.multiply(M1); // go from global system to THREE system
-        //            var mm2 =m2.multiply(M1); // go from global system to THREE system
-        //            logMatrix('m1', mm1);
-        //            console.log('m1',mm1);
-        //            console.log('m2',mm2);
-                   var DP1 = new THREE.Vector3().setFromMatrixPosition(m1); // In "global" coordinates not THREE
-                   var DP2 = new THREE.Vector3().setFromMatrixPosition(m2);
-    //                console.log('DP1',DP1)
-    //                console.log('DP2',DP2)
-                   //var P1 = new THREE.Vector3(-Nodes[i1][1], Nodes[i1][2], -Nodes[i1][0])
-                   //var P2 = new THREE.Vector3(-Nodes[i2][1], Nodes[i2][2], -Nodes[i2][0])
-        //            var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1[1], Nodes[i1][2]+ DP1[2],-Nodes[i1][0] -DP1[0]);
-        //            var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2[1], Nodes[i2][2]+ DP2[2],-Nodes[i2][0] -DP2[0]);
-                   // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
-                   var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1.y, Nodes[i1][2]+ DP1.z,-Nodes[i1][0] -DP1.x);
-                   var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2.y, Nodes[i2][2]+ DP2.z,-Nodes[i2][0] -DP2.x);
-                   var arr = PLT.segmentOrient(P1,P2);
-                   Elems[iElem].setRotationFromMatrix(arr[0])
-                   Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
-    //                console.log('P1',P1);
-    //                console.log('P2',P2);
-                }
+                if (TSHasmat4) {
+                    for (var iElem = 0; iElem < nElem; iElem++) {
+                       var i1 = Connectivity[iElem][0]
+                       var i2 = Connectivity[iElem][1]
+                       var elements1= new Float32Array(Mat4[time_index][i1]);
+                       var elements2= new Float32Array(Mat4[time_index][i2]);
+                       var m1 = new THREE.Matrix4();
+                       var m2 = new THREE.Matrix4();
+                       m1.elements = elements1;
+                       m2.elements = elements2;
+            //            logMatrix('m1', m1);
+            //            var mm1 =m1.multiply(M1); // go from global system to THREE system
+            //            var mm2 =m2.multiply(M1); // go from global system to THREE system
+            //            logMatrix('m1', mm1);
+            //            console.log('m1',mm1);
+            //            console.log('m2',mm2);
+                       var DP1 = new THREE.Vector3().setFromMatrixPosition(m1); // In "global" coordinates not THREE
+                       var DP2 = new THREE.Vector3().setFromMatrixPosition(m2);
+        //                console.log('DP1',DP1)
+        //                console.log('DP2',DP2)
+                       //var P1 = new THREE.Vector3(-Nodes[i1][1], Nodes[i1][2], -Nodes[i1][0])
+                       //var P2 = new THREE.Vector3(-Nodes[i2][1], Nodes[i2][2], -Nodes[i2][0])
+            //            var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1[1], Nodes[i1][2]+ DP1[2],-Nodes[i1][0] -DP1[0]);
+            //            var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2[1], Nodes[i2][2]+ DP2[2],-Nodes[i2][0] -DP2[0]);
+                       // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
+                       var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1.y, Nodes[i1][2]+ DP1.z,-Nodes[i1][0] -DP1.x);
+                       var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2.y, Nodes[i2][2]+ DP2.z,-Nodes[i2][0] -DP2.x);
+                       var arr = PLT.segmentOrient(P1,P2);
+                       Elems[iElem].setRotationFromMatrix(arr[0])
+                       Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+        //                console.log('P1',P1);
+        //                console.log('P2',P2);
+                    }
+                } else {
+                    // --- Using displacement
+                    for (var iElem = 0; iElem < nElem; iElem++) {
+                       var i1 = Connectivity[iElem][0]
+                       var i2 = Connectivity[iElem][1]
+                       var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[time_index][i1][1], Nodes[i1][2] + Displ[time_index][i1][2], -Nodes[i1][0] - Displ[time_index][i1][0])
+                       var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[time_index][i2][1], Nodes[i2][2] + Displ[time_index][i2][2], -Nodes[i2][0] - Displ[time_index][i2][0])
+                       var arr = PLT.segmentOrient(P1,P2);
+                       Elems[iElem].setRotationFromMatrix(arr[0])
+                       Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
+                    }
+                } // 
             }
-        }
-//         Exception
-    }
+        } // Plotting Relative Motion Time Series
+    } // --- Switch on iPlot, Mode/TimeSeries
     controls.update();
     render();
 
