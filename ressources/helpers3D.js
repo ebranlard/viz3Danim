@@ -68,7 +68,7 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
     //s1.position.set(P1.x,P1.y,P1.z);
     //s2.position.set(P2.x,P2.y,P2.z);
     var s1, s2
-    
+
     var arr = segmentOrient(P1, P2);
 
     var cyl_geo = new THREE.CylinderGeometry(R2, R1, 2*arr[2], 20, 2, false)
