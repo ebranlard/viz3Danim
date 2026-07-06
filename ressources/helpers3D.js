@@ -1,8 +1,9 @@
 import * as THREE from            './three.module.js';
 
 /* returns orientation and position of a segment, assumed to be along y*/
-function segmentOrient(P1, P2, SideA_dir, twistAngle){
-    /* Optional sideA_dir argument for the rectangle cross section */
+function segmentOrient(P1, P2, ref_dir, twistAngle){
+    /* Optional ref_dir argument: cross-section reference direction (SideA_dir for
+     * rectangles, x_e for cylinders) */
     /* Optional twistAngle (radians): rotation of the cross-section about the element's
      * longitudinal axis (torsion). Defaults to 0 (no twist), so existing callers
      * (initial mesh creation in cylinderBetweenPoints()/rectangleBetweenPoints(), which
@@ -16,24 +17,25 @@ function segmentOrient(P1, P2, SideA_dir, twistAngle){
     var orientation = new THREE.Matrix4()
 
     /* THREE.Object3D().up (=Y) default orientation for all objects */
-    if (SideA_dir) {
-        // Rectangle: build basis from beam longitudinal axis + known SideA_dir
+    if (ref_dir) {
+        // Build basis from beam longitudinal axis + known cross-section reference direction
+        // (rectanges: refDir = SideA_dir and cylinders: refDir = x_e).
 
         // Beam longitudinal axis
         var yAxis = direction.clone().normalize();
         /* Coord conversion OpenFAST->Three.js */
         var xAxis = new THREE.Vector3(
-            -SideA_dir[1],  // x = -y OpenFAST
-             SideA_dir[2],  // y = z OpenFAST
-            -SideA_dir[0]   // z = -x OpenFAST
+            -ref_dir[1],  // x = -y OpenFAST
+             ref_dir[2],  // y = z OpenFAST
+            -ref_dir[0]   // z = -x OpenFAST
         ).normalize();
         var zAxis = new THREE.Vector3().crossVectors(xAxis, yAxis).normalize();
 
-        xAxis.crossVectors(yAxis, zAxis).normalize(); // Re-orthogonalize xAxis: ensures SideA is perpendicular to the deformed beam axis
+        xAxis.crossVectors(yAxis, zAxis).normalize(); // Re-orthogonalize xAxis: ensures SideA or x_e is perpendicular to the deformed beam axis
         orientation.makeBasis(xAxis, yAxis, zAxis);
 
     } else {
-        // Cylinder
+        // Fallback only when no physical reference direction is available (old JSON files)
         orientation.lookAt(P1, P2, new THREE.Object3D().up);
         /* rotation around axis X by -90 degrees
         * matches the default orientation Y
@@ -58,7 +60,7 @@ function segmentOrient(P1, P2, SideA_dir, twistAngle){
 
 function cylinderBetweenPoints(P1, P2, R1, R2, color){
 
-    // --- Create sphre end points for debug
+    // --- Create sphere end points for debug
     //var s1_geo = new THREE.SphereGeometry(R1, 16, 16, 0, 2*Math.PI);
     //var s2_geo = new THREE.SphereGeometry(R2, 16, 16, 0, 2*Math.PI);
     //var s1_mat = new THREE.MeshBasicMaterial({color:'white'})
@@ -70,8 +72,9 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
     var s1, s2
 
     var arr = segmentOrient(P1, P2);
+    var length = 2*arr[2]; // full beam length
 
-    var cyl_geo = new THREE.CylinderGeometry(R2, R1, 2*arr[2], 20, 2, false)
+    var cyl_geo = new THREE.CylinderGeometry(R2, R1, length, 20, 2, false)
     //var cyl_mat = new THREE.MeshBasicMaterial( {color: color} );
     var cyl_mat = new THREE.MeshPhongMaterial(
         {color: color,
@@ -87,6 +90,17 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
         new THREE.LineBasicMaterial({ color: 0x000000 })
     );
     cyl.add(cyl_edges);
+
+    // Add a single longitudinal edge on the surface, at local +X (azimuth 0).
+    // This allows to observe torsion in a cylinder.
+    // Added as a child of "cyl_edges", so it automatically follows the same
+    // rotation/twist as the cylinder itself; no extra update needed.
+    var cyl_longitudinal_edge = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(R1, -length/2, 0), // bottom, at radius R1
+        new THREE.Vector3(R2,  length/2, 0)  // top, at radius R2
+    ]);
+    var edge = new THREE.Line(cyl_longitudinal_edge, new THREE.LineBasicMaterial({ color: 0x000000 }));
+    cyl_edges.add(edge);
 
     cyl.applyMatrix4(arr[0])
     cyl.position.set(arr[1].x, arr[1].y, arr[1].z);
