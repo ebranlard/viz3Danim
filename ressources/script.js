@@ -858,16 +858,13 @@ function plotSceneAtTime() {
                var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[i1][1]*fact, Nodes[i1][2] + Displ[i1][2]*fact, -Nodes[i1][0] - Displ[i1][0]*fact)
                var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[i2][1]*fact, Nodes[i2][2] + Displ[i2][2]*fact, -Nodes[i2][0] - Displ[i2][0]*fact)
                var SideA_dir = (Props[iElem].shape === 'rectangle') ? Props[iElem].SideA_dir : null; // Only used for rectangles, but we can pass it as null for cylinders
-               var arr = PLT.segmentOrient(P1,P2,SideA_dir);
-               var Rmat = arr[0]; // Orientation matrix that points the element from P1 to P2
 
-               // Torsion animation
-               // segmentOrient() only orients the element's axis along the P1->P2 direction.
-               // But it has no information about the torsion along the longitudinal axis.
-               // The torsional rotation comes from the "Rot" field of the mode,
-               // which stores the nodal rotation vector [rx,ry,rz] (in OpenFAST global coords).
-               // We isolate the "torsion" part of that rotation by projecting the (averaged)
-               // nodal rotation vector onto the element's own (undeformed) axis direction.
+               // Torsion angle: segmentOrient() only knows about P1/P2, so the twist about the
+               // element's longitudinal axis is computed here (it needs Rot and node
+               // indices).
+               // We isolate the twist by averaging the two end-node rotation vectors and
+               // projecting the result onto the element's undeformed longitudinal axis.
+               var twistAngle = 0;
                if (Rot != null) {
                     // Undeformed element axis, in OpenFAST coordinates (unit vector from P1 to P2)
                     var axisOF = new THREE.Vector3(
@@ -879,14 +876,11 @@ function plotSceneAtTime() {
                     var Rot2 = new THREE.Vector3(Rot[i2][0], Rot[i2][1], Rot[i2][2]);
                     var RotAvg = Rot1.add(Rot2).multiplyScalar(0.5);
                     // Twist angle (rad) = RotAvg along the beam axis, scaled by "fact" to make it like Displ
-                    var twistAngle = RotAvg.dot(axisOF) * fact;
-                    // The element is built along its own local Y axis (see segmentOrient(),
-                    // cylinderBetweenPoints(), rectangleBetweenPoints() in helpers3D.js)
-                    var twistMatrix = new THREE.Matrix4().makeRotationY(twistAngle);
-                    // Rotate the orientation matrix by the twist angle
-                    Rmat = Rmat.clone().multiply(twistMatrix);
+                    twistAngle = RotAvg.dot(axisOF) * fact;
                }
-               Elems[iElem].setRotationFromMatrix(Rmat)
+
+               var arr = PLT.segmentOrient(P1,P2,SideA_dir,twistAngle);
+               Elems[iElem].setRotationFromMatrix(arr[0])
                Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
            } else {
                console.log('PROBLEM, LIKELY RIGID LINK, TODO!', iElem, i1, i2, Displ.length);
