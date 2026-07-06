@@ -1,7 +1,14 @@
 import * as THREE from            './three.module.js';
 
 /* returns orientation and position of a segment, assumed to be along y*/
-function segmentOrient(P1, P2, SideA_dir){ /* Optional sideA_dir argument for the rectangle cross section */
+function segmentOrient(P1, P2, SideA_dir, twistAngle){
+    /* Optional sideA_dir argument for the rectangle cross section */
+    /* Optional twistAngle (radians): rotation of the cross-section about the element's
+     * longitudinal axis (torsion). Defaults to 0 (no twist), so existing callers
+     * (initial mesh creation in cylinderBetweenPoints()/rectangleBetweenPoints(), which
+     * don't have information about torsion) are unaffected. */
+    twistAngle = twistAngle || 0;
+
     var direction = new THREE.Vector3().subVectors( P2, P1 );
     var middle   =  new THREE.Vector3().addVectors( P1, direction.multiplyScalar(0.5) );
     var length = direction.length(); // half-length. Callers use 2*arr[2] for full beam length
@@ -11,7 +18,7 @@ function segmentOrient(P1, P2, SideA_dir){ /* Optional sideA_dir argument for th
     /* THREE.Object3D().up (=Y) default orientation for all objects */
     if (SideA_dir) {
         // Rectangle: build basis from beam longitudinal axis + known SideA_dir
-        
+
         // Beam longitudinal axis
         var yAxis = direction.clone().normalize();
         /* Coord conversion OpenFAST->Three.js */
@@ -39,6 +46,13 @@ function segmentOrient(P1, P2, SideA_dir){ /* Optional sideA_dir argument for th
         orientation.multiply(M1);
     }
 
+    // Apply torsion: rotate the cross-section by twistAngle about the element's own
+    // longitudinal (local Y) axis.
+    if (twistAngle !== 0) {
+        var twistMatrix = new THREE.Matrix4().makeRotationY(twistAngle);
+        orientation.multiply(twistMatrix);
+    }
+
     return [orientation, middle, length];
 }
 
@@ -54,7 +68,7 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
     //s1.position.set(P1.x,P1.y,P1.z);
     //s2.position.set(P2.x,P2.y,P2.z);
     var s1, s2
-    
+
     var arr = segmentOrient(P1, P2);
 
     var cyl_geo = new THREE.CylinderGeometry(R2, R1, 2*arr[2], 20, 2, false)
@@ -62,7 +76,7 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
     var cyl_mat = new THREE.MeshPhongMaterial(
         {color: color,
         shininess: 60
-        } 
+        }
     );
     var cyl     = new THREE.Mesh( cyl_geo, cyl_mat );
 

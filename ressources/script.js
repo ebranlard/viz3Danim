@@ -27,13 +27,13 @@ var params = {
     tMax: 1, //  max time
     amplitude: 1.0, // amplitude NOTE: init value set in enableGUI using _default value
     animID: "None",
-    showBox: true, 
-    showAxes: true, 
-    showSeaBed: false, 
-    showSeaLevel: false, 
+    showBox: true,
+    showAxes: true,
+    showSeaBed: false,
+    showSeaLevel: false,
     showEdges: true,
     showLocalCS: false,  // show local coordinate systems per element
-    showThreeViews: false, 
+    showThreeViews: false,
     whiteBackground: false, // toggle white background for main canvas
 };
 var dt_min     = 0.0001;
@@ -68,7 +68,7 @@ var hsplit=0.333333
 
 var defaultView =  {
         left: 0,
-        bottom: 0, 
+        bottom: 0,
         width: 1.0,
         height: 1.0,
         background: new THREE.Color( 0.0, 0.0, 0.0 ),
@@ -77,7 +77,7 @@ var defaultView =  {
 var views = [
     {
         left: 0,
-        bottom: vsplit, 
+        bottom: vsplit,
         width: 1.0,
         height: 1.0-vsplit,
         //background: new THREE.Color( 0.5, 0.5, 0.7 ),
@@ -130,8 +130,8 @@ function createWorldFromJSONStream(Jstream) {
 //        NOTE Keep Me
 //        nElem=1;
 //        nNodes=2;
-//        Nodes = new Array(nNodes); 
-//        Displ = new Array(nNodes); 
+//        Nodes = new Array(nNodes);
+//        Displ = new Array(nNodes);
 //        Nodes[0] =  new THREE.Vector3(-30,0,20);
 //        Nodes[1] =  new THREE.Vector3( 20,5,20);
 //        Displ[0] =  new THREE.Vector3(10,0,0.0);
@@ -147,7 +147,7 @@ function createWorldFromJSONStream(Jstream) {
         if (typeof Modes.length === 'number') {
             console.log('>>> Legacy format for Modes detected')
             if (Modes.length>0){
-                Modes = { default: Modes } 
+                Modes = { default: Modes }
             }
         }
         console.log('Mode keys: '      , Object.keys(Modes).length)
@@ -161,11 +161,11 @@ function createWorldFromJSONStream(Jstream) {
         groundLevel  = AJ.groundLevel;
         nNodes = Nodes.length;
         nElem  = Props.length;
-        Elems = new Array(nElem); 
- 
+        Elems = new Array(nElem);
+
         // Clean scene
-        while(scene.children.length > 0){ 
-             scene.remove(scene.children[0]); 
+        while(scene.children.length > 0){
+             scene.remove(scene.children[0]);
         }
         // Add FEM Nodes/Elements
         for (var iElem = 0; iElem < nElem; iElem++) {
@@ -211,7 +211,7 @@ function createWorldFromJSONStream(Jstream) {
            }
            Elems[iElem]= mesh; // Store the element (cylinder or rectangle)
         }
- 
+
 
         // --- Creating HTML to select modes
         var pp= document.getElementById('mode-selection');
@@ -347,7 +347,7 @@ function createWorldFromJSONStream(Jstream) {
                 const globalZ_three = new THREE.Vector3(0, 1, 0);
 
                 if (Math.abs(ze.dot(globalZ_three)) > 0.999) {
-                    // ze vertical: singular case, cross product ze x globalZ degenerates to zero. 
+                    // ze vertical: singular case, cross product ze x globalZ degenerates to zero.
                     xe = new THREE.Vector3(0, 0, -1); // x_e is aligned with OpenFAST X global axis
                 } else {
                     // All other beaams that are not vertical
@@ -421,7 +421,7 @@ function createCamera(){
     var h = height;
     var w = width;
     // Default target
-    defaultTarget = new THREE.Vector3(extent.centerX, extent.centerY, extent.centerZ); 
+    defaultTarget = new THREE.Vector3(extent.centerX, extent.centerY, extent.centerZ);
 //     if (AR >1 ) {
 //         var h = extent.maxDim*2.0;
 //         var w = h*AR;
@@ -432,8 +432,8 @@ function createCamera(){
     frustumSize = extent.maxDim*2.0
     orthographicCamera = new THREE.OrthographicCamera(
          -w/2+extent.centerX,  w/2+extent.centerX,
-          h/2+extent.centerY, -h/2+extent.centerY, 
-        -extent.maxDim*50, 
+          h/2+extent.centerY, -h/2+extent.centerY,
+        -extent.maxDim*50,
         extent.maxDim*50);
     perspectiveCamera  = new THREE.PerspectiveCamera(40, windowWidth/windowHeight, extent.maxDim*0.005, extent.maxDim*50);
 
@@ -444,7 +444,7 @@ function createCamera(){
 
     var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
     //scene.add(camera);
-    views[0].camera = camera; 
+    views[0].camera = camera;
 
     // Ambient light
     scene.add(new THREE.AmbientLight(0xFFFFFF, 0.5));
@@ -478,7 +478,7 @@ function toggleThreeViews(v){
         // pass
     } else {
         // Using default views
-        //updateSize(); 
+        //updateSize();
         var left   = Math.floor( windowWidth  * defaultView.left );
         var bottom = Math.floor( windowHeight * defaultView.bottom );
         var width  = Math.floor( windowWidth  * defaultView.width );
@@ -513,7 +513,7 @@ function camYView(camera){// OpenFAST "y" view is three -x view
     return camera;
 }
 function camZView(camera){ // OpenFAST "z" view is three y view // NOTE: rotation matrix sensitive
-    camera.position.set( extent.centerX, extent.centerY+extent.maxDim*3, extent.centerZ+0.0001); 
+    camera.position.set( extent.centerX, extent.centerY+extent.maxDim*3, extent.centerZ+0.0001);
     camera.lookAt      (defaultTarget);
     return camera;
 }
@@ -591,7 +591,7 @@ function updatePerspCam(camera, w, h){
          // Update camera aspect ratios
         perspectiveCamera  = updatePerspCam(perspectiveCamera,  WH[0], WH[1]);
         orthographicCamera = updateOrthoCam(orthographicCamera, WH[0], WH[1]);
-        for ( var ii = 1; ii < views.length; ++ ii ) {             
+        for ( var ii = 1; ii < views.length; ++ ii ) {
             views[ii].camera = updateOrthoCam(views[ii].camera, WH[0], WH[1]);
         }
         controls.handleResize();
@@ -709,7 +709,7 @@ function enableGUI() {
 
     // Default options
     //params.animating = true; // Animates or not
-    params.t_bar =0 ;         
+    params.t_bar =0 ;
     setDtFromJS(dt_default) ;        // Time step
     setAmplitudeFromJS(A_default) ;  // Amplitude of modes
     showHide(params.showBox   ,   box);
@@ -825,7 +825,7 @@ function setupGUI(){
 
 
 /** */
-function plotSceneAtTime() { 
+function plotSceneAtTime() {
     if ( params.animID=='Jumps' ) {
        var fact = Math.round((params.t_bar % 1))*2 -1
        fact = params.amplitude * fact;
@@ -844,9 +844,10 @@ function plotSceneAtTime() {
         console.log('iPlot: ', iPlot);
 
     } else if (iPlot==1) {
-        //--- Plotting Modes based on Displacement field
+        //--- Plotting Modes based on Displacement and Rotation field
         //console.log('>>> Plotting scene for time',time, 'amplitude',amplitude,'dt',dt)
         var Displ=Modes[keyMode][iMode].Displ;
+        var Rot  =Modes[keyMode][iMode].Rot;
 
         for (var iElem = 0; iElem < nElem; iElem++) {
            var i1 = Connectivity[iElem][0]
@@ -857,7 +858,28 @@ function plotSceneAtTime() {
                var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[i1][1]*fact, Nodes[i1][2] + Displ[i1][2]*fact, -Nodes[i1][0] - Displ[i1][0]*fact)
                var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[i2][1]*fact, Nodes[i2][2] + Displ[i2][2]*fact, -Nodes[i2][0] - Displ[i2][0]*fact)
                var SideA_dir = (Props[iElem].shape === 'rectangle') ? Props[iElem].SideA_dir : null; // Only used for rectangles, but we can pass it as null for cylinders
-               var arr = PLT.segmentOrient(P1,P2,SideA_dir);
+
+               // Torsion angle: segmentOrient() only knows about P1/P2, so the twist about the
+               // element's longitudinal axis is computed here (it needs Rot and node
+               // indices).
+               // We isolate the twist by averaging the two end-node rotation vectors and
+               // projecting the result onto the element's undeformed longitudinal axis.
+               var twistAngle = 0;
+               if (Rot != null) {
+                    // Undeformed element axis, in OpenFAST coordinates (unit vector from P1 to P2)
+                    var axisOF = new THREE.Vector3(
+                        Nodes[i2][0]-Nodes[i1][0],
+                        Nodes[i2][1]-Nodes[i1][1],
+                        Nodes[i2][2]-Nodes[i1][2]).normalize();
+                    // Average the two end-node rotation vectors for this element
+                    var Rot1 = new THREE.Vector3(Rot[i1][0], Rot[i1][1], Rot[i1][2]);
+                    var Rot2 = new THREE.Vector3(Rot[i2][0], Rot[i2][1], Rot[i2][2]);
+                    var RotAvg = Rot1.add(Rot2).multiplyScalar(0.5);
+                    // Twist angle (rad) = RotAvg along the beam axis, scaled by "fact" to make it like Displ
+                    twistAngle = RotAvg.dot(axisOF) * fact;
+               }
+
+               var arr = PLT.segmentOrient(P1,P2,SideA_dir,twistAngle);
                Elems[iElem].setRotationFromMatrix(arr[0])
                Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
            } else {
@@ -874,17 +896,17 @@ function plotSceneAtTime() {
             console.log(' ' + e[2] + ' ' + e[6] + ' ' + e[10] + ' ' + e[14]);
             console.log(' ' + e[3] + ' ' + e[7] + ' ' + e[11] + ' ' + e[15]);
         }
-// 
+//
         var time = params.tMin + params.t_bar * (params.tMax-params.tMin)
         var time_index = TOOLS.closestIndex(timeArray, time);
         /* THREE.Object3D().up (=Y) default orientation for all objects */
-        /* rotation around axis X by -90 degrees 
-         * matches the default orientation Y 
+        /* rotation around axis X by -90 degrees
+         * matches the default orientation Y
          * with the orientation of looking Z */
         var M1=new THREE.Matrix4();
-        M1.set(0 ,-1  , 0 , 0 , 
-               0 , 0  , 1 , 0 , 
-               -1, 0 , 0 , 0  , 
+        M1.set(0 ,-1  , 0 , 0 ,
+               0 , 0  , 1 , 0 ,
+               -1, 0 , 0 , 0  ,
                0 , 0  , 0 , 1);
         var Mat4  = TimeSeries[keyTS][iTS].mat4
         var Displ = TimeSeries[keyTS][iTS].Displ
@@ -907,11 +929,11 @@ function plotSceneAtTime() {
                alert('NotImplementedError');
             }
 
-        } else { 
+        } else {
             // --- TimeSeries data is relative motion
             if (TimeSeries[keyTS][iTS].element) {
                alert('NotImplementedError Time series per element');
-            } else { 
+            } else {
                 if (TSHasmat4) {
                     for (var iElem = 0; iElem < nElem; iElem++) {
                        var i1 = Connectivity[iElem][0]
@@ -958,7 +980,7 @@ function plotSceneAtTime() {
                        Elems[iElem].setRotationFromMatrix(arr[0])
                        Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
                     }
-                } // 
+                } //
             }
         } // Plotting Relative Motion Time Series
     } // --- Switch on iPlot, Mode/TimeSeries
@@ -980,7 +1002,7 @@ function doFrame() {
             params.t_bar = params.t_bar % 1.0 // Ensuring that t_bar stays between 0 and 1
             updateTime();
             plotSceneAtTime();
-            requestAnimationFrame(doFrame); 
+            requestAnimationFrame(doFrame);
         }
     }
 }
@@ -1066,12 +1088,12 @@ function animationSwitch() {
     showHide(params.showLocalCS && params.animID != 'Max', localCSAxes);
     updateLocalCSButtonState();
 }
-function setAmplitudeFromSlider() { 
+function setAmplitudeFromSlider() {
     if (!params.animating) {
       plotSceneAtTime();
     }
 }
-function setAmplitudeFromJS(ampl_in) { 
+function setAmplitudeFromJS(ampl_in) {
     // Set global variable
     params.amplitude = Math.max(Math.min(ampl_in, 2*A_max), A_min) ;
     // replot scene
@@ -1079,7 +1101,7 @@ function setAmplitudeFromJS(ampl_in) {
       plotSceneAtTime();
     }
 }
-function setDtFromJS(dt_in) { 
+function setDtFromJS(dt_in) {
     // Set global variable
     params.dt = Math.max(Math.min(dt_in, 2*dt_max),dt_min) ;
 }
@@ -1109,7 +1131,7 @@ function modeSelect(){
     timeArray[100] = 0.999999;
     if (!params.animating) {
         if ( params.animID=='Max' ) {
-            params.t_bar = 0.75; 
+            params.t_bar = 0.75;
         }else{
             params.t_bar=0;
         }
@@ -1177,12 +1199,12 @@ function init() {
     try {
         try {
             canvas = document.getElementById("maincanvas");
-			renderer = new THREE.WebGLRenderer( { 
+			renderer = new THREE.WebGLRenderer( {
               canvas: canvas,
 			   antialias: true
 			} );
         }
-        catch (e) { 
+        catch (e) {
             document.body.innerHTML="<h3><b>Sorry, WebGL is required but is not available.</b><h3>";
             return;
         }
@@ -1198,7 +1220,7 @@ function init() {
         // Create scene
         createBasicWorld();
 
-        // --- If local file is provided, load and install model 
+        // --- If local file is provided, load and install model
         var local_file = WEB.getQueryVariable("load");
         if (local_file){
             console.log('Loading local file: ',local_file);
