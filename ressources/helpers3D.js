@@ -58,7 +58,7 @@ function segmentOrient(P1, P2, ref_dir, twistAngle){
     return [orientation, middle, length];
 }
 
-function cylinderBetweenPoints(P1, P2, R1, R2, color){
+function cylinderBetweenPoints(P1, P2, R1, R2, color, x_e){
 
     // --- Create sphere end points for debug
     //var s1_geo = new THREE.SphereGeometry(R1, 16, 16, 0, 2*Math.PI);
@@ -93,14 +93,17 @@ function cylinderBetweenPoints(P1, P2, R1, R2, color){
 
     // Add a single longitudinal edge on the surface, at local +X (azimuth 0).
     // This allows to observe torsion in a cylinder.
+    // Only draw the longitudinal edge when x_e is available in the JSON file.
     // Added as a child of "cyl_edges", so it automatically follows the same
     // rotation/twist as the cylinder itself; no extra update needed.
-    var cyl_longitudinal_edge = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(R1, -length/2, 0), // bottom, at radius R1
-        new THREE.Vector3(R2,  length/2, 0)  // top, at radius R2
-    ]);
-    var edge = new THREE.Line(cyl_longitudinal_edge, new THREE.LineBasicMaterial({ color: 0x000000 }));
-    cyl_edges.add(edge);
+    if (x_e) {
+        var cyl_longitudinal_edge = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(R1, -length/2, 0), // bottom, at radius R1
+            new THREE.Vector3(R2,  length/2, 0)  // top, at radius R2
+        ]);
+        var edge = new THREE.Line(cyl_longitudinal_edge, new THREE.LineBasicMaterial({ color: 0x000000 }));
+        cyl_edges.add(edge);
+    }
 
     cyl.applyMatrix4(arr[0])
     cyl.position.set(arr[1].x, arr[1].y, arr[1].z);

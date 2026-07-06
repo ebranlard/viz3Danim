@@ -196,7 +196,8 @@ function createWorldFromJSONStream(Jstream) {
                // Cylinder
                var R =  Props[iElem].Diam/2;
                if (Props[iElem].type==2) { R = R/2; }
-               var arr = PLT.cylinderBetweenPoints(P1, P2, R, R, color);
+               var x_e = Props[iElem].x_e || null; // Compatibility with old JSON files: Only draw the longitudinal edge in cylinders if x_e is available
+               var arr = PLT.cylinderBetweenPoints(P1, P2, R, R, color, x_e);
                mesh = arr[0]; // Use the cylinder mesh
            }
            scene.add(mesh);
