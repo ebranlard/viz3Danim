@@ -196,7 +196,8 @@ function createWorldFromJSONStream(Jstream) {
                // Cylinder
                var R =  Props[iElem].Diam/2;
                if (Props[iElem].type==2) { R = R/2; }
-               var arr = PLT.cylinderBetweenPoints(P1, P2, R, R, color);
+               var x_e = Props[iElem].x_e || null; // Compatibility with old JSON files: Only draw the longitudinal edge in cylinders if x_e is available
+               var arr = PLT.cylinderBetweenPoints(P1, P2, R, R, color, x_e);
                mesh = arr[0]; // Use the cylinder mesh
            }
            scene.add(mesh);
@@ -857,7 +858,7 @@ function plotSceneAtTime() {
            if ((i1<Displ.length) && (i2<Displ.length)) {
                var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[i1][1]*fact, Nodes[i1][2] + Displ[i1][2]*fact, -Nodes[i1][0] - Displ[i1][0]*fact)
                var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[i2][1]*fact, Nodes[i2][2] + Displ[i2][2]*fact, -Nodes[i2][0] - Displ[i2][0]*fact)
-               var SideA_dir = (Props[iElem].shape === 'rectangle') ? Props[iElem].SideA_dir : null; // Only used for rectangles, but we can pass it as null for cylinders
+               var SideA_dir = Props[iElem].SideA_dir || Props[iElem].x_e || null; // Cross-section reference direction: SideA_dir for rectangles, x_e for cylinders
 
                // Torsion angle: segmentOrient() only knows about P1/P2, so the twist about the
                // element's longitudinal axis is computed here (it needs Rot and node
@@ -961,7 +962,7 @@ function plotSceneAtTime() {
                        // NOTE: Coord conversion OpenFAST to Three:  x=-yOF, y=zOF, z=-xOF
                        var P1 = new THREE.Vector3(-Nodes[i1][1]-DP1.y, Nodes[i1][2]+ DP1.z,-Nodes[i1][0] -DP1.x);
                        var P2 = new THREE.Vector3(-Nodes[i2][1]-DP2.y, Nodes[i2][2]+ DP2.z,-Nodes[i2][0] -DP2.x);
-                       var SideA_dir = (Props[iElem].shape === 'rectangle') ? Props[iElem].SideA_dir : null; // Only used for rectangles, but we can pass it as null for cylinders
+                       var SideA_dir = Props[iElem].SideA_dir || Props[iElem].x_e || null; // Cross-section reference direction: SideA_dir for rectangles, x_e for cylinders
                        var arr = PLT.segmentOrient(P1,P2,SideA_dir);
                        Elems[iElem].setRotationFromMatrix(arr[0])
                        Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
@@ -975,7 +976,7 @@ function plotSceneAtTime() {
                        var i2 = Connectivity[iElem][1]
                        var P1 = new THREE.Vector3(-Nodes[i1][1] - Displ[time_index][i1][1], Nodes[i1][2] + Displ[time_index][i1][2], -Nodes[i1][0] - Displ[time_index][i1][0])
                        var P2 = new THREE.Vector3(-Nodes[i2][1] - Displ[time_index][i2][1], Nodes[i2][2] + Displ[time_index][i2][2], -Nodes[i2][0] - Displ[time_index][i2][0])
-                       var SideA_dir = (Props[iElem].shape === 'rectangle') ? Props[iElem].SideA_dir : null; // Only used for rectangles, but we can pass it as null for cylinders
+                       var SideA_dir = Props[iElem].SideA_dir || Props[iElem].x_e || null; // Cross-section reference direction: SideA_dir for rectangles, x_e for cylinders
                        var arr = PLT.segmentOrient(P1,P2,SideA_dir);
                        Elems[iElem].setRotationFromMatrix(arr[0])
                        Elems[iElem].position.set(arr[1].x, arr[1].y, arr[1].z);
