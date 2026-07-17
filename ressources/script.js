@@ -1030,6 +1030,7 @@ function startAnimation() {
        jQuery("#playAnimation").prop('disabled', true);
        jQuery("#pauseAnimation").prop('disabled', false);
        jQuery("#stopAnimation").prop('disabled', false);
+       jQuery("#exportAnimation").prop('disabled', true);
        params.animating = true;
        showHide(false, localCSAxes);
        updateLocalCSButtonState();
@@ -1046,9 +1047,11 @@ function pauseAnimation() {
     if (iPlot==0) {
        jQuery("#playAnimation").prop('disabled', true);
        jQuery("#stopAnimation").prop('disabled', true);
+       jQuery("#exportAnimation").prop('disabled', true);
     } else{
        jQuery("#playAnimation").prop('disabled', false);
        jQuery("#stopAnimation").prop('disabled', false);
+       jQuery("#exportAnimation").prop('disabled', false);
     }
     jQuery("#pauseAnimation").prop('disabled', true);
 }
@@ -1056,8 +1059,10 @@ function stopAnimation() {
     //console.log('Stop Animation', iPlot, params.t_bar);
     if (iPlot==0) {
         jQuery("#playAnimation").prop('disabled', true);
+        jQuery("#exportAnimation").prop('disabled', true);
     }else{
         jQuery("#playAnimation").prop('disabled', false);
+        jQuery("#exportAnimation").prop('disabled', false);
     }
     jQuery("#pauseAnimation").prop('disabled', true);
     jQuery("#stopAnimation").prop('disabled', true);
@@ -1068,6 +1073,118 @@ function stopAnimation() {
     updateTime();
     plotSceneAtTime();
 }
+
+//--------------------------- animation export (video capture) ---------------
+var isExporting = false; // true while a recording is in progress
+
+/** Pick the best supported webm codec for MediaRecorder */
+function pickExportMimeType() {
+    var candidates = [
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+    ];
+    for (var i = 0; i < candidates.length; i++) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) {
+            return candidates[i];
+        }
+    }
+    return ''; // let the browser pick a default
+}
+
+/** File name for the exported video, based on what is currently shown */
+function exportFileName() {
+    var name = 'mode_shape_animation';
+    if (iPlot === 1) {
+        name = Modes[keyMode][iMode].name;
+    } else if (iPlot === 2) {
+        name = TimeSeries[keyTS][iTS].name;
+    }
+    return name + '.webm';
+}
+
+/** Disable all animation control buttons while a recording is in progress
+ *  (they get re-enabled afterwards via stopAnimation(), which knows the real state) */
+function lockAnimControlsForExport() {
+    jQuery("#playAnimation").prop('disabled', true);
+    jQuery("#pauseAnimation").prop('disabled', true);
+    jQuery("#stopAnimation").prop('disabled', true);
+    jQuery("#exportAnimation").prop('disabled', true);
+}
+
+/** Recording exactly one full animation loop (t_bar: 0 -> 1) */
+function exportAnimation() {
+    if (isExporting || params.animating || iPlot === 0) {
+        return; // nothing to export, or something else is already running
+    }
+    if (!window.MediaRecorder || !canvas.captureStream) {
+        documentAlert('Video export is not supported by this browser. Please try a recent version of Chrome or Firefox.'); // Chrome and Firefox have been tested
+        return;
+    }
+
+    isExporting = true;
+    lockAnimControlsForExport();
+
+    // Always reset to the start of the cycle before recording
+    params.t_bar = 0;
+    updateTime();
+    plotSceneAtTime();
+
+    var mimeType = pickExportMimeType();
+    var stream = canvas.captureStream(30); // Sample at 30 fps
+    var recorderOpts = { videoBitsPerSecond: 8000000 }; // 8 Mbps for good quality
+    if (mimeType) { recorderOpts.mimeType = mimeType; }
+
+    var recorder;
+    try {
+        recorder = new MediaRecorder(stream, recorderOpts);
+    } catch (e) {
+        console.log(e);
+        documentAlert('Could not start video recording: ' + e);
+        isExporting = false;
+        stopAnimation();
+        return;
+    }
+
+    var chunks = [];
+    recorder.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) { chunks.push(e.data); }
+    };
+    recorder.onstop = function () {
+        var blob = new Blob(chunks, { type: mimeType || 'video/webm' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = exportFileName();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000); // Clean up the object URL after a short delay (1000 ms)
+
+        isExporting = false;
+        stopAnimation(); // restores button states and resets t_bar/view
+    };
+
+    recorder.start();
+
+    // --- Drive the animation through exactly one loop, then stop the recorder
+    function exportFrame() {
+        params.t_bar = params.t_bar + params.dt / 10; // Same speed as the regular Play button
+        if (params.t_bar >= 1) {
+            params.t_bar = 1;
+            updateTime();
+            plotSceneAtTime();
+            // Give the last frame a moment to be captured before stopping
+            setTimeout(function () { recorder.stop(); }, 150); // 150 ms delay
+        } else {
+            updateTime();
+            plotSceneAtTime();
+            requestAnimationFrame(exportFrame);
+        }
+    }
+    requestAnimationFrame(exportFrame);
+}
+
 function animationSwitch() {
     if ( params.animID=='Loop' ) {
     	startAnimation();
@@ -1266,6 +1383,10 @@ function initAnimControl (){
     jQuery("#stopAnimation").click(function(){
         //console.log('Stop');
         stopAnimation();
+    });
+    jQuery("#exportAnimation").click(function(){
+        //console.log('Export');
+        exportAnimation();
     });
 }
 
